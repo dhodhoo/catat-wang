@@ -33,3 +33,19 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 public/waha-qr.png
+
+.vercel
+
+# Extra env files
+.env.*
+!.env.example
+
+# Logs and generic text artifacts
+*.log
+*.txt
+
+# Temporary / testing files
+test-*.ts
+test-*.js
+tmp-*
+*-utf8.*

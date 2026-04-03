@@ -9,6 +9,7 @@ export async function invokeReceiptOcr(
     mediaUrl: string;
     storageKey: string;
     imageDataUrl?: string;
+    focusArea?: "full_receipt" | "total_section";
   }
 ) {
   const client = accessToken ? createInsforgeServerClient(accessToken) : createInsforgeAdminClient();

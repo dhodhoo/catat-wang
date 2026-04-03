@@ -12,11 +12,11 @@ export function parseCommand(rawText: string, receivedAt: Date, timezone: string
     };
   }
 
-  if (/hapus( transaksi)? terakhir/i.test(lower)) {
+  if (/^hapus(?:\b|$)/i.test(lower)) {
     return { intent: "delete_last" };
   }
 
-  if (/ubah terakhir/i.test(lower)) {
+  if (/^(ubah|ganti)(?:\b|$)/i.test(lower)) {
     const amount = extractAmountFromText(lower);
     return {
       intent: "update_last",

@@ -21,7 +21,7 @@ export function extractAmountFromText(text: string): number | null {
     }
   }
 
-  const match = lower.match(/(\d+)\s*(rb|ribu|jt|juta)?/i);
+  const match = lower.match(/([\d.]+)\s*(rb|ribu|k|jt|juta|m|miliar|milyar|b|triliun|t)?(?:\b|$)/i);
   if (!match) {
     return null;
   }
@@ -33,13 +33,21 @@ export function extractAmountFromText(text: string): number | null {
     return null;
   }
 
-  if (suffix === "rb" || suffix === "ribu") {
-    return numeric * 1000;
+  if (suffix === "rb" || suffix === "ribu" || suffix === "k") {
+    return Math.round(numeric * 1_000);
   }
 
-  if (suffix === "jt" || suffix === "juta") {
-    return numeric * 1000000;
+  if (suffix === "jt" || suffix === "juta" || suffix === "m") {
+    return Math.round(numeric * 1_000_000);
   }
 
-  return numeric;
+  if (suffix === "miliar" || suffix === "milyar" || suffix === "b") {
+    return Math.round(numeric * 1_000_000_000);
+  }
+
+  if (suffix === "triliun" || suffix === "t") {
+    return Math.round(numeric * 1_000_000_000_000);
+  }
+
+  return Math.round(numeric);
 }

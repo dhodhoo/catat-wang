@@ -1,13 +1,11 @@
 import { getCategoryIdByName } from "@/lib/categories/service";
 import { createInsforgeAdminClient } from "@/lib/insforge/server";
 import { parseIncomingText } from "@/lib/parser/parse-text-transaction";
-import { invokeReceiptOcr } from "@/lib/receipts/ocr";
-import { uploadReceiptBlob } from "@/lib/receipts/upload";
+
 import { createTransaction, deleteLastTransaction, updateLastTransaction } from "@/lib/transactions/service";
 import { fail, ok } from "@/lib/utils/http";
+
 import {
-  downloadWhatsAppMedia,
-  getWhatsAppMediaDownloadUrl,
   normalizePhone,
   sendWhatsAppTextMessage,
   verifyWhatsAppSignature
@@ -15,16 +13,12 @@ import {
 import {
   buildLinkInstructionMessage,
   buildLinkSuccessMessage,
-  buildNeedManualAmountMessage,
   buildTransactionSavedMessage
 } from "@/lib/whatsapp/templates";
 import { computeDedupeHash, normalizeWhatsappPayload } from "@/lib/whatsapp/webhook";
 
-async function blobToDataUrl(blob: Blob) {
-  const buffer = Buffer.from(await blob.arrayBuffer());
-  const mimeType = blob.type || "image/jpeg";
-  return `data:${mimeType};base64,${buffer.toString("base64")}`;
-}
+
+
 
 async function findUserByPhone(phone: string) {
   const admin = createInsforgeAdminClient();
@@ -183,7 +177,7 @@ export async function POST(request: Request) {
     }
 
     if (message.type === "text" || message.type === "command") {
-      const parsed = parseIncomingText(message.text ?? "", message.receivedAt, profile.timezone ?? "Asia/Jakarta");
+      const parsed = await parseIncomingText(message.text ?? "", message.receivedAt, profile.timezone ?? "Asia/Jakarta");
       const messageLog = await persistMessageLog({
         whatsapp_message_id: message.messageId,
         user_id: profile.id,
@@ -259,106 +253,12 @@ export async function POST(request: Request) {
       continue;
     }
 
-    if (message.type === "image" && message.image?.url) {
-      const messageLog = await persistMessageLog({
-        whatsapp_message_id: message.messageId,
-        user_id: profile.id,
-        wa_from: normalizePhone(message.from),
-        wa_type: "image",
-        raw_text: null,
-        media_id: message.image.id,
-        media_mime_type: message.image.mimeType,
-        media_sha256: message.image.sha256,
-        intent: "create",
-        parsed_payload: null,
-        dedupe_hash: computeDedupeHash({ from: message.from, mediaId: message.image.id }),
-        processing_status: "received",
-        transaction_id: null,
-        provider_payload: message.providerPayload,
-        received_at: message.receivedAt.toISOString()
-      });
 
-      try {
-        const mediaUrl = await getWhatsAppMediaDownloadUrl(message.image.url);
-        const blob = await downloadWhatsAppMedia(mediaUrl);
-        const imageDataUrl = await blobToDataUrl(blob);
-        const uploaded = await uploadReceiptBlob("", profile.id, `${message.image.id}.jpg`, blob);
-        const ocr = await invokeReceiptOcr("", {
-          userId: profile.id,
-          messageLogId: messageLog.id,
-          mediaUrl,
-          storageKey: uploaded.key,
-          imageDataUrl
-        });
-
-        if (!ocr.totalAmount) {
-          await admin.database
-            .from("message_logs")
-            .update({ processing_status: "needs_input" })
-            .eq("id", messageLog.id);
-          await sendWhatsAppTextMessage(message.replyToChatId, buildNeedManualAmountMessage());
-          continue;
-        }
-
-        const categoryId = await getCategoryIdByName("", profile.id, "expense", "Belanja");
-        const transaction = await createTransaction("", {
-          userId: profile.id,
-          categoryId,
-          sourceChannel: "whatsapp_receipt",
-          transaction: {
-            type: "expense",
-            amount: ocr.totalAmount,
-            transactionDate: ocr.transactionDate ?? message.receivedAt.toISOString().slice(0, 10),
-            categoryName: "Belanja",
-            note: ocr.merchantName ?? "Receipt WhatsApp",
-            reviewStatus: ocr.confidence >= 0.8 ? "clear" : "need_review",
-            reviewReasons: ocr.reviewReasons
-          },
-          sourceMessageLogId: messageLog.id,
-          rawInputReference: uploaded.url
-        });
-
-        await admin.database.from("receipt_attachments").insert([
-          {
-            user_id: profile.id,
-            transaction_id: transaction.id,
-            storage_bucket: uploaded.bucket,
-            storage_key: uploaded.key,
-            image_url: uploaded.url,
-            ocr_text: ocr.ocrText,
-            merchant_name: ocr.merchantName,
-            detected_total: ocr.totalAmount,
-            detected_date: ocr.transactionDate,
-            ocr_confidence: ocr.confidence,
-            raw_ocr_payload: ocr.rawPayload
-          }
-        ]);
-
-        await admin.database
-          .from("message_logs")
-          .update({ processing_status: "processed", transaction_id: transaction.id, parsed_payload: ocr })
-          .eq("id", messageLog.id);
-
-        await sendWhatsAppTextMessage(
-          message.replyToChatId,
-          buildTransactionSavedMessage({
-            amount: ocr.totalAmount,
-            categoryName: "Belanja",
-            type: "expense",
-            source: "receipt",
-            merchantName: ocr.merchantName
-          })
-        );
-      } catch (error) {
-        await admin.database
-          .from("message_logs")
-          .update({
-            processing_status: "failed",
-            parsed_payload: { error: error instanceof Error ? error.message : "OCR failed" }
-          })
-          .eq("id", messageLog.id);
-        await sendWhatsAppTextMessage(message.replyToChatId, buildNeedManualAmountMessage()).catch(() => null);
-      }
+    if (message.type === "image") {
+      await sendWhatsAppTextMessage(
+        message.replyToChatId,
+        "Maaf, pencatatan via foto struk saat ini tidak tersedia. Silakan ketik nominal transaksinya langsung, contoh:\n\n• *jajan 25rb*\n• *gaji masuk 5jt*\n• *belanja 150000*"
+      );
     }
   }
 

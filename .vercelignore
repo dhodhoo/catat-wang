@@ -1,0 +1,7 @@
+.git
+.next
+.waha
+node_modules
+deploy-prod.log
+.next-dev.log
+.next-dev.err.log

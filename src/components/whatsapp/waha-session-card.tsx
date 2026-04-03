@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 
 interface SessionState {
   configured: boolean;
@@ -21,6 +21,14 @@ export function WahaSessionCard() {
   const [data, setData] = useState<SessionState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function clearPoll() {
+    if (pollTimeoutRef.current) {
+      clearTimeout(pollTimeoutRef.current);
+      pollTimeoutRef.current = null;
+    }
+  }
 
   async function load() {
     const response = await fetch("/api/whatsapp/session", { cache: "no-store" });
@@ -33,12 +41,26 @@ export function WahaSessionCard() {
 
     setError(null);
     setData(payload);
+
+    const status = payload.session?.status;
+    const shouldPoll = status === "STARTING" || (status === "SCAN_QR_CODE" && !payload.qr);
+
+    clearPoll();
+    if (shouldPoll) {
+      pollTimeoutRef.current = setTimeout(() => {
+        void load();
+      }, 2000);
+    }
   }
 
   useEffect(() => {
     startTransition(() => {
       void load();
     });
+
+    return () => {
+      clearPoll();
+    };
   }, []);
 
   async function mutate(action: "ensure" | "disconnect") {
@@ -106,7 +128,7 @@ export function WahaSessionCard() {
         </div>
       </div>
 
-      {!data?.configured ? (
+      {data && !data.configured ? (
         <div className="mt-6 rounded-2xl bg-amber-50 p-4 text-sm text-amber-900">
           Isi <code>WAHA_BASE_URL</code> dan <code>WAHA_API_KEY</code> dulu agar app bisa bicara ke WAHA.
         </div>

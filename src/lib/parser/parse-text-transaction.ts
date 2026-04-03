@@ -2,13 +2,21 @@ import { extractAmountFromText } from "@/lib/parser/amount";
 import { inferCategoryName, inferTransactionType } from "@/lib/parser/category";
 import { resolveTransactionDate } from "@/lib/parser/date";
 import { parseCommand } from "@/lib/parser/parse-command";
+import { parseWithAi } from "@/lib/parser/ai-parser";
 import type { ParsedIncomingText, ReviewReason } from "@/types/domain";
 
-export function parseIncomingText(
+export async function parseIncomingText(
   rawText: string,
   receivedAt: Date,
   timezone: string
-): ParsedIncomingText {
+): Promise<ParsedIncomingText> {
+  // Try AI first
+  const aiResult = await parseWithAi(rawText, receivedAt, timezone);
+  if (aiResult && aiResult.intent !== "unknown") {
+    return aiResult;
+  }
+
+  // Fallback to regex
   const command = parseCommand(rawText, receivedAt, timezone);
   if (command) {
     return command;
