@@ -6,6 +6,35 @@ const client = createClient({
   isServerMode: true
 });
 
+const weekdayMap: Record<string, number> = {
+  Sun: 0,
+  Mon: 1,
+  Tue: 2,
+  Wed: 3,
+  Thu: 4,
+  Fri: 5,
+  Sat: 6
+};
+
+function getLocalReminderContext(timezone: string) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23"
+  }).formatToParts(new Date());
+
+  const hour = parts.find((part) => part.type === "hour")?.value ?? "00";
+  const minute = parts.find((part) => part.type === "minute")?.value ?? "00";
+  const weekday = parts.find((part) => part.type === "weekday")?.value ?? "Sun";
+
+  return {
+    hourMinute: `${hour}:${minute}`,
+    weekday: weekdayMap[weekday] ?? 0
+  };
+}
+
 async function sendWhatsAppMessage(to: string, body: string) {
   const wahaBaseUrl = Deno.env.get("WAHA_BASE_URL");
   const wahaApiKey = Deno.env.get("WAHA_API_KEY");
@@ -29,7 +58,17 @@ async function sendWhatsAppMessage(to: string, body: string) {
     throw new Error(`Failed to send WAHA reminder (${response.status})`);
   }
 
-  return response.json();
+  const responseText = await response.text();
+
+  if (!responseText.trim()) {
+    return {};
+  }
+
+  try {
+    return JSON.parse(responseText);
+  } catch {
+    return { raw: responseText };
+  }
 }
 
 export default async function handler() {
@@ -43,12 +82,10 @@ export default async function handler() {
   }
 
   const now = new Date();
-  const hourMinute = now.toISOString().slice(11, 16);
-  const weekday = now.getUTCDay();
 
   const { data, error } = await client.database
     .from("profiles")
-    .select("id, whatsapp_phone_e164, reminder_frequency, reminder_time, reminder_weekday")
+    .select("id, whatsapp_phone_e164, reminder_frequency, reminder_time, reminder_weekday, timezone")
     .eq("reminder_enabled", true)
     .not("whatsapp_phone_e164", "is", null);
 
@@ -57,6 +94,8 @@ export default async function handler() {
   }
 
   for (const profile of data ?? []) {
+    const timezone = profile.timezone || "Asia/Jakarta";
+    const { hourMinute, weekday } = getLocalReminderContext(timezone);
     const isDaily = profile.reminder_frequency === "daily" && profile.reminder_time?.slice(0, 5) === hourMinute;
     const isWeekly =
       profile.reminder_frequency === "weekly" &&
