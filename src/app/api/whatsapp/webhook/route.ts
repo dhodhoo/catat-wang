@@ -67,7 +67,7 @@ async function handleLinkCode(messageText: string, waFrom: string, replyToChatId
   await admin.database
     .from("profiles")
     .update({
-      whatsapp_phone_e164: normalizePhone(waFrom),
+      whatsapp_phone_e164: data.phone_e164,
       whatsapp_phone_verified_at: new Date().toISOString()
     })
     .eq("id", data.user_id);

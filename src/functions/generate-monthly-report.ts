@@ -12,16 +12,11 @@ export default async function(req) {
   }
 
   try {
-    const { month, year } = await req.json();
+    const body = await req.json();
+    const { month, year } = body;
     
-    if (!month || !year) {
-      return new Response(JSON.stringify({ error: 'Missing month or year' }), { 
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    // Extract token from request headers
+    console.log(`Generating report. Month: ${month}, Year: ${year}`);
+    
     const authHeader = req.headers.get('Authorization');
     const userToken = authHeader ? authHeader.replace('Bearer ', '') : null;
 
@@ -32,16 +27,17 @@ export default async function(req) {
       });
     }
 
-    // Create client with user's token for authenticated access
+    // Explicitly set baseUrl to match the project in .env.local
+    const baseUrl = 'https://mrdw83b9.ap-southeast.insforge.app';
+
     const insforge = createClient({
-      baseUrl: Deno.env.get('INSFORGE_BASE_URL'),
+      baseUrl: baseUrl,
       edgeFunctionToken: userToken
     });
 
-    // Get authenticated user
-    const { data: userData } = await insforge.auth.getCurrentUser();
-    if (!userData?.user?.id) {
-      return new Response(JSON.stringify({ error: 'Unauthorized: Invalid token' }), {
+    const { data: userData, error: authError } = await insforge.auth.getCurrentUser();
+    if (authError || !userData?.user?.id) {
+       return new Response(JSON.stringify({ error: `Auth failed: ${authError?.message || 'No user'}` }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -49,9 +45,10 @@ export default async function(req) {
 
     const userId = userData.user.id;
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+    // End of month
     const endDate = new Date(year, month, 0).toISOString().split('T')[0];
 
-    // 1. Fetch transactions (uses RLS via userToken)
+    // 1. Fetch transactions
     const { data: transactions, error: txError } = await insforge.database
       .from('transactions')
       .select('type, amount, category_id')
@@ -59,19 +56,19 @@ export default async function(req) {
       .gte('transaction_date', startDate)
       .lte('transaction_date', endDate);
 
-    if (txError) throw txError;
+    if (txError) throw new Error(`TX Fetch Error: ${txError.message}`);
 
-    // 2. Fetch categories for names (uses RLS)
+    // 2. Fetch categories
     const { data: categories, error: catError } = await insforge.database
       .from('categories')
       .select('id, name');
 
-    if (catError) throw catError;
+    if (catError) throw new Error(`Category Fetch Error: ${catError.message}`);
 
     const catMap = {};
     categories.forEach(c => catMap[c.id] = c.name);
 
-    // 3. Aggregate data
+    // 3. Aggregate
     let totalIncome = 0;
     let totalExpense = 0;
     const categoryAgg = {};
@@ -96,8 +93,7 @@ export default async function(req) {
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 5);
 
-    // 4. Upsert report (Uses userToken, RLS policy must allow user to insert own reports)
-    // Actually, I should ensure the policy allows this.
+    // 4. Upsert report
     const { data: report, error: reportError } = await insforge.database
       .from('monthly_reports')
       .upsert([{
@@ -107,17 +103,18 @@ export default async function(req) {
         total_expense: totalExpense,
         net_cashflow: totalIncome - totalExpense,
         top_categories: topCategories,
-        transaction_count: transactions.length,
+        transaction_count: (transactions || []).length,
         generated_at: new Date().toISOString()
-      }], { onConflict: 'user_id, month_year' });
+      }], { onConflict: 'user_id,month_year' });
 
-    if (reportError) throw reportError;
+    if (reportError) throw new Error(`Report Upsert Error: ${reportError.message}`);
 
     return new Response(JSON.stringify({ status: 'ok', data: report }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
   } catch (error) {
+    console.error('Function error:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
