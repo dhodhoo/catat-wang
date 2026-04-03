@@ -74,3 +74,20 @@ export interface CashflowBucket {
   expenseTotal: number;
   netCashflow: number;
 }
+export interface CategorySummary {
+  name: string;
+  amount: number;
+  percentage: number;
+}
+
+export interface MonthlyReport {
+  id: string;
+  user_id: string;
+  month_year: string;
+  total_income: number;
+  total_expense: number;
+  net_cashflow: number;
+  top_categories: CategorySummary[];
+  transaction_count: number;
+  generated_at: string;
+}

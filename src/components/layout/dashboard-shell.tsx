@@ -2,9 +2,10 @@ import type { Route } from "next";
 import Link from "next/link";
 import { LogoutButton } from "@/components/layout/logout-button";
 
-const navItems: Array<{ href: Route; label: string }> = [
+const navItems: Array<{ href: string; label: string }> = [
   { href: "/dashboard", label: "Beranda" },
   { href: "/transactions", label: "Transaksi" },
+  { href: "/reports", label: "Laporan" },
   { href: "/categories", label: "Kategori" },
   { href: "/reminders", label: "Pengingat" },
   { href: "/settings/whatsapp", label: "WhatsApp" }
@@ -46,7 +47,7 @@ export function DashboardShell({
             {navItems.map((item) => (
               <Link
                 key={item.href}
-                href={item.href}
+                href={item.href as any}
                 className="rounded-xl px-5 py-2.5 text-xs font-bold tracking-wide transition-all hover:text-emerald-400 active:scale-95"
               >
                 {item.label}
