@@ -22,12 +22,12 @@ export function LogoutButton() {
 
   return (
     <button
-      className="rounded-xl px-5 py-2.5 text-xs font-bold tracking-wide transition-all text-rose-500 hover:text-rose-400 active:scale-95 disabled:opacity-50"
+      className="button-secondary border-rose-200 bg-rose-50/70 px-4 py-3 text-rose-700 hover:border-rose-300 hover:text-rose-800"
       disabled={isSubmitting}
       onClick={handleLogout}
       type="button"
     >
-      {isSubmitting ? "KELUAR..." : "KELUAR"}
+      {isSubmitting ? "Keluar..." : "Keluar"}
     </button>
   );
 }

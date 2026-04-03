@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { BellRing, CalendarDays, Clock3 } from "lucide-react";
 
 interface ReminderSettingsFormProps {
   initialSettings: {
@@ -31,6 +32,12 @@ export function ReminderSettingsForm({ initialSettings }: ReminderSettingsFormPr
   const [message, setMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
+  const scheduleText = useMemo(() => {
+    if (!enabled) return "Pengingat sedang dimatikan.";
+    if (frequency === "daily") return `Pengingat akan dikirim setiap hari pukul ${time}.`;
+    return `Pengingat akan dikirim setiap ${weekdayOptions.find((item) => item.value === weekday)?.label} pukul ${time}.`;
+  }, [enabled, frequency, time, weekday]);
+
   async function handleSave() {
     try {
       setIsSaving(true);
@@ -48,7 +55,7 @@ export function ReminderSettingsForm({ initialSettings }: ReminderSettingsFormPr
       if (!response.ok) throw new Error("Gagal menyimpan setting.");
       setMessage("Setting berhasil disimpan.");
       router.refresh();
-    } catch (error) {
+    } catch {
       setMessage("Gagal menyimpan setting.");
     } finally {
       setIsSaving(false);
@@ -56,80 +63,108 @@ export function ReminderSettingsForm({ initialSettings }: ReminderSettingsFormPr
   }
 
   return (
-    <div className="space-y-8">
-      <section className="rounded-3xl border border-slate-800 bg-slate-900/40 p-8 backdrop-blur-md glow-card relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-          <span className="font-mono text-4xl uppercase">PENGINGAT</span>
-        </div>
-        
-        <div className="flex items-center justify-between gap-6 mb-10 border-b border-slate-800 pb-8">
-          <div className="space-y-1">
-            <p className="font-mono text-[10px] uppercase tracking-widest text-emerald-500">Otomatisasi</p>
-            <h2 className="text-3xl font-bold tracking-tight">{enabled ? "PENGINGAT AKTIF" : "PENGINGAT MATI"}</h2>
-          </div>
-          <button
-            onClick={() => setEnabled(!enabled)}
-            className={`rounded-xl px-6 py-3 font-bold text-xs tracking-widest transition-all active:scale-95 ${enabled ? 'bg-emerald-500 text-slate-900' : 'bg-slate-800 text-slate-400 border border-slate-700'}`}
-          >
-            {enabled ? "MATIKAN" : "NYALAKAN"}
-          </button>
-        </div>
+    <div className="space-y-6">
+      <section className="surface-panel p-6 sm:p-7">
+        <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+          <div className="space-y-4">
+            <p className="eyebrow">Reminder otomatis</p>
+            <h2 className="text-3xl text-ink">Bangun kebiasaan mencatat dengan jadwal yang terasa masuk akal.</h2>
+            <p className="max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+              Reminder yang terlalu agresif bikin cepat diabaikan. Karena itu, halaman ini dirancang untuk membantu
+              Anda memilih jadwal yang realistis dan mudah dipatuhi.
+            </p>
 
-        <div className="grid gap-8 md:grid-cols-3">
-          <div className="space-y-2">
-            <label className="font-mono text-[10px] uppercase tracking-wider text-slate-500">FREKUENSI</label>
-            <select
-              className="w-full bg-slate-950 rounded-xl border border-slate-800 px-4 py-3 text-slate-200 outline-none focus:border-emerald-500/50 transition-all appearance-none disabled:opacity-30"
-              disabled={!enabled}
-              onChange={(e) => setFrequency(e.target.value as any)}
-              value={frequency}
-            >
-              <option value="daily">HARIAN</option>
-              <option value="weekly">MINGGUAN</option>
-            </select>
-          </div>
-          
-          <div className="space-y-2">
-            <label className="font-mono text-[10px] uppercase tracking-wider text-slate-500">WAKTU PENGINGAT</label>
-            <input
-              className="w-full bg-slate-950 rounded-xl border border-slate-800 px-4 py-3 text-slate-200 outline-none focus:border-emerald-500/50 transition-all disabled:opacity-30"
-              disabled={!enabled}
-              onChange={(e) => setTime(e.target.value)}
-              type="time"
-              value={time}
-            />
+            <div className="grid gap-4 sm:grid-cols-3">
+              {[
+                { label: "Status", value: enabled ? "Aktif" : "Nonaktif", icon: BellRing },
+                { label: "Frekuensi", value: enabled ? (frequency === "daily" ? "Harian" : "Mingguan") : "-", icon: CalendarDays },
+                { label: "Waktu", value: enabled ? time : "-", icon: Clock3 }
+              ].map((item) => {
+                const Icon = item.icon;
+                return (
+                  <article key={item.label} className="surface-muted p-4">
+                    <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-moss shadow-sm">
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <p className="mt-5 text-sm text-slate-500">{item.label}</p>
+                    <p className="mt-2 text-2xl text-ink">{item.value}</p>
+                  </article>
+                );
+              })}
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="font-mono text-[10px] uppercase tracking-wider text-slate-500">HARI</label>
-            <select
-              className="w-full bg-slate-950 rounded-xl border border-slate-800 px-4 py-3 text-slate-200 outline-none focus:border-emerald-500/50 transition-all appearance-none disabled:opacity-10"
-              disabled={!enabled || frequency !== "weekly"}
-              onChange={(e) => setWeekday(Number(e.target.value))}
-              value={weekday}
-            >
-              {weekdayOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label.toUpperCase()}</option>
-              ))}
-            </select>
+          <div className="surface-muted p-5 sm:p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="eyebrow">Jadwal aktif</p>
+                <h3 className="mt-3 text-2xl text-ink">{enabled ? "Reminder menyala" : "Reminder dimatikan"}</h3>
+              </div>
+              <button
+                className={enabled ? "button-primary" : "button-secondary"}
+                onClick={() => setEnabled(!enabled)}
+                type="button"
+              >
+                {enabled ? "Matikan" : "Nyalakan"}
+              </button>
+            </div>
+
+            <p className="mt-4 rounded-[1.25rem] border border-[#ece2d2] bg-white/70 px-4 py-3 text-sm leading-6 text-slate-600">
+              {scheduleText}
+            </p>
+
+            <div className="mt-5 grid gap-4">
+              <label className="space-y-2">
+                <span className="field-label">Frekuensi</span>
+                <select
+                  className="field-select disabled:opacity-50"
+                  disabled={!enabled}
+                  onChange={(event) => setFrequency(event.target.value as "daily" | "weekly")}
+                  value={frequency}
+                >
+                  <option value="daily">Harian</option>
+                  <option value="weekly">Mingguan</option>
+                </select>
+              </label>
+
+              <label className="space-y-2">
+                <span className="field-label">Waktu pengingat</span>
+                <input
+                  className="field-input disabled:opacity-50"
+                  disabled={!enabled}
+                  onChange={(event) => setTime(event.target.value)}
+                  type="time"
+                  value={time}
+                />
+              </label>
+
+              <label className="space-y-2">
+                <span className="field-label">Hari</span>
+                <select
+                  className="field-select disabled:opacity-40"
+                  disabled={!enabled || frequency !== "weekly"}
+                  onChange={(event) => setWeekday(Number(event.target.value))}
+                  value={weekday}
+                >
+                  {weekdayOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <button className="button-primary mt-2 w-full justify-center" disabled={isSaving} onClick={handleSave}>
+                {isSaving ? "Menyimpan..." : "Simpan pengaturan"}
+              </button>
+            </div>
+
+            {message && (
+              <p className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                {message}
+              </p>
+            )}
           </div>
-        </div>
-
-        <div className="mt-10 p-5 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 border-dashed">
-          <p className="font-mono text-[10px] text-emerald-500/60 leading-relaxed uppercase tracking-tighter">
-            Catatan: Pengingat dikirim melalui WhatsApp sesuai dengan jadwal yang Anda tentukan di halaman ini.
-          </p>
-        </div>
-
-        <div className="mt-10 flex items-center gap-6">
-          <button
-            className="rounded-xl bg-emerald-500 px-8 py-4 font-bold text-slate-950 hover:bg-emerald-400 transition-all active:scale-95 disabled:opacity-50"
-            disabled={isSaving}
-            onClick={handleSave}
-          >
-            {isSaving ? "MENYIMPAN..." : "SIMPAN SETTING"}
-          </button>
-          {message && <p className="font-mono text-[10px] text-emerald-400 uppercase tracking-widest">{message}</p>}
         </div>
       </section>
     </div>

@@ -47,31 +47,31 @@ export function AuthFormCard({
   }
 
   return (
-    <div className="w-full max-w-md rounded-[2.5rem] border border-slate-800 bg-slate-900/40 p-10 backdrop-blur-2xl shadow-2xl glow-card relative overflow-hidden">
-      <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-        <span className="font-mono text-4xl">SECURE</span>
-      </div>
-      
-      <div className="mb-10 space-y-2">
-        <div className="flex items-center gap-2 mb-4">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
-          <p className="font-mono text-[10px] uppercase tracking-widest text-emerald-500/80">Access Protocol</p>
+    <div className="surface-panel glow-card w-full max-w-xl overflow-hidden p-8 sm:p-10">
+      <div className="mb-8 flex flex-col gap-4 border-b border-[#e8ddcc] pb-6 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-2">
+          <p className="eyebrow">Akses akun CatatWang</p>
+          <h1 className="text-3xl text-ink sm:text-[2.5rem]">{title}</h1>
+          <p className="max-w-md text-sm leading-7 text-slate-600 sm:text-base">{subtitle}</p>
         </div>
-        <h1 className="text-3xl font-bold tracking-tight text-white">{title}</h1>
-        <p className="text-sm text-slate-400 font-medium leading-relaxed">{subtitle}</p>
+        <span className="status-chip self-start">
+          <span className="h-2 w-2 rounded-full bg-moss" />
+          Aman dan terenkripsi
+        </span>
       </div>
 
       <form
-        className="space-y-6"
+        className="space-y-5"
         action={async (formData) => {
           await handleSubmit(formData);
         }}
       >
         {fields.map((field) => (
           <label key={field.name} className="block space-y-2">
-            <span className="font-mono text-[10px] uppercase tracking-wider text-slate-500">{field.label}</span>
+            <span className="field-label">{field.label}</span>
             <input
-              className="w-full bg-slate-950 rounded-xl border border-slate-800 px-4 py-3 text-slate-200 outline-none focus:border-emerald-500/50 transition-all placeholder:text-slate-700"
+              autoComplete={field.type === "password" ? "current-password" : field.name}
+              className="field-input"
               name={field.name}
               placeholder={field.placeholder}
               required
@@ -79,17 +79,26 @@ export function AuthFormCard({
             />
           </label>
         ))}
-        
-        <button
-          className="w-full rounded-xl bg-emerald-500 py-4 font-bold text-slate-950 hover:bg-emerald-400 transition-all active:scale-95 disabled:opacity-50 shadow-[0_0_20px_rgba(16,185,129,0.1)]"
-          disabled={isLoading}
-          type="submit"
-        >
-          {isLoading ? "EXECUTING..." : submitLabel.toUpperCase()}
+
+        <button className="button-primary mt-2 w-full justify-center py-4 text-base" disabled={isLoading} type="submit">
+          {isLoading ? "Memproses..." : submitLabel}
         </button>
 
-        {message && <p className="text-xs font-mono text-emerald-500 uppercase tracking-tight text-center">{message}</p>}
-        {error && <p className="text-xs font-mono text-rose-500 uppercase tracking-tight text-center">{error}</p>}
+        <p className="rounded-[1.25rem] border border-[#ece2d2] bg-[#fffaf1] px-4 py-3 text-sm leading-6 text-slate-500">
+          Data transaksi Anda tetap privat. Kami hanya memakai detail yang dibutuhkan untuk mencatat dan
+          menampilkan ringkasan keuangan.
+        </p>
+
+        {message && (
+          <p className="rounded-[1.25rem] border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            {message}
+          </p>
+        )}
+        {error && (
+          <p className="rounded-[1.25rem] border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            {error}
+          </p>
+        )}
       </form>
     </div>
   );

@@ -1,91 +1,182 @@
 import Link from "next/link";
+import { ArrowRight, ChartNoAxesCombined, MessageCircleMore, ShieldCheck, Wallet } from "lucide-react";
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 relative overflow-hidden">
-      {/* Background Architectural Patterns */}
-      <div className="absolute inset-0 dashboard-grid opacity-20 pointer-events-none" />
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-emerald-500/10 blur-[150px] pointer-events-none" />
-      
-      <div className="relative mx-auto flex min-h-screen max-w-6xl flex-col justify-center px-6 py-20">
-        <section className="grid gap-16 lg:grid-cols-2 items-center">
-          <div className="space-y-10">
-            <div className="flex items-center gap-3">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
-              <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-emerald-500">
-                Pencatat Wang / Alpha Core
-              </p>
+    <main className="relative min-h-screen overflow-hidden">
+      <div className="absolute inset-0 app-backdrop" />
+      <div className="absolute inset-0 dashboard-grid opacity-40" />
+
+      <div className="relative mx-auto max-w-7xl px-6 py-6">
+        <header className="flex flex-wrap items-center justify-between gap-4 py-4">
+          <div className="flex items-center gap-3">
+            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-moss text-white shadow-card">
+              <Wallet className="h-5 w-5" />
+            </span>
+            <div>
+              <p className="eyebrow">CatatWang</p>
+              <p className="text-sm text-slate-600">WhatsApp-first personal finance tracker</p>
             </div>
-            
-            <div className="space-y-6">
-              <h1 className="text-6xl md:text-7xl font-bold tracking-tighter leading-[1.1] bg-gradient-to-br from-white to-slate-500 bg-clip-text text-transparent">
-                Control your <br /> cashflow in one <br /> simple chat.
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <Link className="button-ghost" href="/sign-in">
+              Masuk
+            </Link>
+            <Link className="button-primary" href="/sign-up">
+              Coba sekarang
+            </Link>
+          </div>
+        </header>
+
+        <section className="grid gap-10 pb-10 pt-10 lg:grid-cols-[1.08fr_0.92fr] lg:items-center lg:pb-16 lg:pt-16">
+          <div className="space-y-8">
+            <div className="flex flex-wrap gap-3">
+              <span className="status-chip">
+                <span className="h-2 w-2 rounded-full bg-coral" />
+                Dibuat untuk ritme harian
+              </span>
+              <span className="stat-chip">Lebih nyaman dibuka di mobile maupun desktop</span>
+            </div>
+
+            <div className="space-y-5">
+              <p className="eyebrow">Catat uang tanpa memaksa Anda belajar aplikasi rumit</p>
+              <h1 className="text-5xl leading-none text-ink sm:text-6xl lg:text-7xl">
+                Chat masuk,
+                <br />
+                buku kas rapi,
+                <br />
+                keputusan lebih tenang.
               </h1>
-              <p className="max-w-md text-lg text-slate-400 font-medium leading-relaxed">
-                CatatWang transforms WhatsApp messages into high-fidelity financial intelligence
-                with autonomous parsing and real-time visualization.
+              <p className="max-w-2xl text-lg leading-8 text-slate-600">
+                CatatWang mengubah pesan WhatsApp menjadi transaksi yang tertata, dashboard yang mudah dibaca,
+                dan laporan bulanan yang enak ditinjau kapan saja.
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-4 pt-4">
-              <Link
-                className="group relative rounded-2xl bg-emerald-500 px-8 py-4 text-sm font-bold text-slate-950 transition hover:bg-emerald-400 active:scale-95 shadow-[0_0_20px_rgba(16,185,129,0.2)]"
-                href="/sign-up"
-              >
-                DAFTAR SEKARANG
+            <div className="flex flex-wrap gap-4">
+              <Link className="button-primary gap-2 px-6 py-4 text-base" href="/sign-up">
+                Buat akun gratis
+                <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link
-                className="rounded-2xl border border-slate-800 bg-slate-900/50 backdrop-blur-md px-8 py-4 text-sm font-bold text-white transition hover:bg-slate-800 active:scale-95"
-                href="/sign-in"
-              >
-                LOGIN
+              <Link className="button-secondary gap-2 px-6 py-4 text-base" href="/sign-in">
+                Lihat dashboard
               </Link>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              {[
+                { label: "Input natural", value: "WA", description: "Tulis transaksi seperti biasa lewat chat." },
+                { label: "Review cepat", value: "<1 mnt", description: "Cek transaksi yang perlu perhatian." },
+                { label: "Laporan bulanan", value: "1 klik", description: "Ringkasan siap ditinjau kapan saja." }
+              ].map((item) => (
+                <article key={item.label} className="surface-muted p-5">
+                  <p className="eyebrow">{item.label}</p>
+                  <p className="mt-4 text-3xl text-ink">{item.value}</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{item.description}</p>
+                </article>
+              ))}
             </div>
           </div>
 
-          <div className="relative">
-            <div className="absolute -inset-4 bg-emerald-500/5 blur-[80px] rounded-full" />
-            <div className="relative rounded-[2.5rem] border border-slate-800 bg-slate-900/40 p-4 backdrop-blur-2xl shadow-2xl glow-card">
-              <div className="space-y-4 rounded-[2rem] bg-slate-950 p-6 border border-slate-800/50 shadow-inner">
-                <div className="flex justify-between items-center border-b border-slate-800 pb-4 mb-4">
-                  <p className="font-mono text-[10px] text-slate-500 uppercase tracking-widest">Interface / WhatsApp_v2</p>
-                  <div className="flex gap-1.5">
-                    <div className="h-2 w-2 rounded-full bg-rose-500/50" />
-                    <div className="h-2 w-2 rounded-full bg-amber-500/50" />
-                    <div className="h-2 w-2 rounded-full bg-emerald-500/50" />
+          <div className="surface-panel glow-card p-4 sm:p-5">
+            <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+              <section className="rounded-[1.7rem] border border-[#ded4c4] bg-[#fbf6ee] p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="eyebrow">Simulasi chat</p>
+                    <h2 className="mt-2 text-2xl text-ink">Pencatatan terasa natural</h2>
+                  </div>
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-moss shadow-sm">
+                    <MessageCircleMore className="h-5 w-5" />
+                  </span>
+                </div>
+
+                <div className="mt-6 space-y-4">
+                  <div className="max-w-[82%] rounded-[1.35rem] rounded-tl-md bg-white px-4 py-3 text-sm text-slate-700 shadow-sm">
+                    makan siang 38 ribu di warteg
+                  </div>
+                  <div className="ml-auto max-w-[86%] rounded-[1.35rem] rounded-tr-md bg-moss px-4 py-3 text-sm text-white shadow-sm">
+                    Tercatat sebagai pengeluaran makan: <strong>Rp38.000</strong>
+                    <div className="mt-2 text-xs text-white/70">Kategori tersimpan otomatis, siap direview.</div>
+                  </div>
+                  <div className="max-w-[82%] rounded-[1.35rem] rounded-tl-md bg-white px-4 py-3 text-sm text-slate-700 shadow-sm">
+                    gaji bulan april 8 juta
+                  </div>
+                  <div className="ml-auto max-w-[86%] rounded-[1.35rem] rounded-tr-md bg-coral px-4 py-3 text-sm text-white shadow-sm">
+                    Pemasukan masuk ke laporan bulan ini: <strong>Rp8.000.000</strong>
                   </div>
                 </div>
-                
-                <div className="space-y-6">
-                  <div className="animate-in fade-in slide-in-from-left-4 duration-500">
-                    <div className="inline-block rounded-2xl rounded-tl-none bg-slate-800 px-5 py-3 border border-slate-700">
-                      <p className="text-sm text-slate-200 font-medium">jajan 25k bakso urat</p>
+              </section>
+
+              <section className="space-y-4">
+                <div className="surface-card p-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="eyebrow">Snapshot hari ini</p>
+                      <h2 className="mt-2 text-2xl text-ink">Arus kas terkini</h2>
                     </div>
-                  </div>
-                  
-                  <div className="flex justify-end animate-in fade-in slide-in-from-right-4 duration-500 delay-300">
-                    <div className="inline-block rounded-2xl rounded-tr-none bg-emerald-600 px-5 py-3 border border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.1)]">
-                      <p className="text-sm font-semibold">Tercatat: Rp 25.000 / Bakso Urat</p>
-                      <p className="text-[10px] mt-1 opacity-70 font-mono">STATUS: TERSEDIA</p>
-                    </div>
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff6ea] text-coral">
+                      <ChartNoAxesCombined className="h-5 w-5" />
+                    </span>
                   </div>
 
-                  <div className="animate-in fade-in slide-in-from-left-4 duration-500 delay-1000">
-                    <div className="inline-block rounded-2xl rounded-tl-none bg-slate-800 px-5 py-3 border border-slate-700">
-                      <p className="text-sm text-slate-200 font-medium">gaji masuk 15m</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex justify-end animate-in fade-in slide-in-from-right-4 duration-500 delay-[1300ms]">
-                    <div className="inline-block rounded-2xl rounded-tr-none bg-emerald-600 px-5 py-3 border border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.1)]">
-                      <p className="text-sm font-semibold">Tercatat: Rp 15.000.000 / Gaji</p>
-                      <p className="text-[10px] mt-1 opacity-70 font-mono">STATUS: BERHASIL</p>
-                    </div>
+                  <div className="mt-6 space-y-3">
+                    {[
+                      { label: "Pemasukan", value: "Rp8.500.000", accent: "text-moss" },
+                      { label: "Pengeluaran", value: "Rp2.140.000", accent: "text-coral" },
+                      { label: "Sisa aman", value: "Rp6.360.000", accent: "text-ink" }
+                    ].map((item) => (
+                      <div key={item.label} className="flex items-center justify-between rounded-2xl bg-[#fffaf3] px-4 py-3">
+                        <span className="text-sm text-slate-500">{item.label}</span>
+                        <span className={`text-base font-semibold ${item.accent}`}>{item.value}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </div>
+
+                <div className="surface-card p-5">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-moss">
+                      <ShieldCheck className="h-5 w-5" />
+                    </span>
+                    <div>
+                      <p className="eyebrow">Kenapa terasa nyaman</p>
+                      <h2 className="mt-2 text-xl text-ink">Semua angka penting muncul lebih dulu</h2>
+                    </div>
+                  </div>
+                  <ul className="mt-5 space-y-3 text-sm leading-6 text-slate-600">
+                    <li>Prioritas visual jelas, jadi Anda tidak perlu menebak angka mana yang harus dilihat.</li>
+                    <li>Tabel dan kartu transaksi tetap mudah dipakai di layar kecil.</li>
+                    <li>Alur koneksi WhatsApp dibikin lebih bertahap dan gampang diikuti.</li>
+                  </ul>
+                </div>
+              </section>
             </div>
           </div>
+        </section>
+
+        <section className="grid gap-5 pb-12 md:grid-cols-3">
+          {[
+            {
+              title: "1. Hubungkan WhatsApp",
+              description: "Aktifkan sesi, scan QR, lalu verifikasi nomor Anda supaya chat bisa dikenali."
+            },
+            {
+              title: "2. Catat seperti biasa",
+              description: "Tulis pemasukan atau pengeluaran dengan bahasa natural, sistem bantu menstrukturkan."
+            },
+            {
+              title: "3. Tinjau dan perbaiki",
+              description: "Periksa transaksi, edit bila perlu, lalu nikmati laporan bulanan yang lebih rapi."
+            }
+          ].map((item) => (
+            <article key={item.title} className="surface-card p-6">
+              <p className="eyebrow">Alur penggunaan</p>
+              <h2 className="mt-4 text-2xl text-ink">{item.title}</h2>
+              <p className="mt-3 text-sm leading-7 text-slate-600">{item.description}</p>
+            </article>
+          ))}
         </section>
       </div>
     </main>

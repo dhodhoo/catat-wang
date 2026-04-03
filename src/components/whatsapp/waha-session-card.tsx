@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { CheckCircle2, QrCode, RefreshCw, Unplug } from "lucide-react";
 
 interface SessionState {
   configured: boolean;
@@ -79,86 +80,112 @@ export function WahaSessionCard() {
     await load();
   }
 
+  const statusTone = useMemo(() => {
+    const status = data?.session?.status ?? "TERPUTUS";
+    if (status === "WORKING") return "bg-emerald-50 text-emerald-700";
+    if (status === "SCAN_QR_CODE" || status === "STARTING") return "bg-amber-50 text-amber-700";
+    return "bg-rose-50 text-rose-700";
+  }, [data?.session?.status]);
+
   return (
-    <div className="rounded-3xl border border-slate-800 bg-slate-900/40 p-10 backdrop-blur-md glow-card relative overflow-hidden">
-      <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-        <span className="font-mono text-4xl uppercase">KONEKSI</span>
-      </div>
-
-      <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
-        <div className="space-y-4">
-          <div className="space-y-1">
-            <p className="font-mono text-[10px] uppercase tracking-widest text-emerald-500">Status WhatsApp</p>
-            <h2 className="text-3xl font-bold tracking-tight text-white">{data?.session?.status ?? "TERPUTUS"}</h2>
+    <div className="surface-panel p-6 sm:p-7">
+      <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+        <div>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className={`rounded-full px-4 py-2 text-sm font-medium ${statusTone}`}>
+              {data?.session?.status ?? "TERPUTUS"}
+            </span>
+            <span className="status-chip">
+              <span className="h-2 w-2 rounded-full bg-moss" />
+              Sesi {data?.sessionName ?? "default"}
+            </span>
           </div>
-          
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <span className="font-mono text-[10px] uppercase text-slate-500">SESI:</span>
-              <code className="bg-slate-950 px-2 py-0.5 rounded text-[10px] border border-slate-800 text-emerald-500">{data?.sessionName ?? "default"}</code>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="font-mono text-[10px] uppercase text-slate-500">WEBHOOK:</span>
-              <code className="bg-slate-950 px-2 py-0.5 rounded text-[10px] border border-slate-800 text-slate-400">{data?.webhookUrl ?? "/api/whatsapp/webhook"}</code>
-            </div>
-            {data?.session?.me?.id && (
-              <div className="flex items-center gap-3">
-                <span className="font-mono text-[10px] uppercase text-slate-500">NOMOR BOT:</span>
-                <span className="text-[10px] font-bold text-slate-200">{data.session.me.id}</span>
-              </div>
-            )}
-          </div>
-        </div>
 
-        <div className="flex flex-wrap gap-4">
-          <button
-            className="rounded-xl bg-emerald-500 px-6 py-3 font-bold text-xs tracking-tight text-slate-950 hover:bg-emerald-400 transition-all active:scale-95 disabled:opacity-50"
-            disabled={isPending}
-            onClick={() => mutate("ensure")}
-          >
-            {isPending ? "MEMPROSES..." : "SAMBUNGKAN / SCAN QR"}
-          </button>
-          <button
-            className="rounded-xl border border-slate-800 bg-slate-950 px-6 py-3 font-bold text-xs tracking-tight text-slate-400 hover:text-rose-400 hover:border-rose-900 transition-all active:scale-95 disabled:opacity-50"
-            disabled={isPending}
-            onClick={() => mutate("disconnect")}
-          >
-            PUTUSKAN KONEKSI
-          </button>
-        </div>
-      </div>
-
-      {data && !data.configured && (
-        <div className="mt-8 p-5 rounded-2xl bg-amber-500/5 border border-amber-500/10 border-dashed">
-          <p className="font-mono text-[10px] text-amber-500 leading-relaxed uppercase">
-            Catatan: Konfigurasi API WhatsApp belum lengkap di environment variables.
+          <p className="eyebrow mt-5">Koneksi WAHA</p>
+          <h2 className="mt-3 text-3xl text-ink">Nyalakan sesi lalu scan QR untuk menghubungkan bot.</h2>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+            Halaman ini sekarang memecah alur koneksi menjadi beberapa langkah sederhana supaya Anda tahu apa
+            yang harus dilakukan berikutnya.
           </p>
-        </div>
-      )}
 
-      {data?.qr && (
-        <div className="mt-10 grid gap-8 lg:grid-cols-[220px_1fr] lg:items-center p-8 rounded-3xl bg-slate-950 border border-slate-800 animate-in zoom-in duration-500">
-          <div className="relative group">
-            <div className="absolute -inset-2 bg-emerald-500/10 blur-xl group-hover:bg-emerald-400/20 transition-all" />
-            <img
-              alt="WAHA QR"
-              className="relative rounded-2xl border border-slate-800 bg-white p-4 w-full aspect-square"
-              src={data.qr.startsWith("data:") ? data.qr : `data:image/png;base64,${data.qr}`}
-            />
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <article className="surface-muted p-4">
+              <p className="field-label">Webhook aktif</p>
+              <p className="mt-3 break-all text-sm leading-6 text-slate-600">{data?.webhookUrl ?? "/api/whatsapp/webhook"}</p>
+            </article>
+            <article className="surface-muted p-4">
+              <p className="field-label">Nomor bot</p>
+              <p className="mt-3 text-sm leading-6 text-slate-600">{data?.session?.me?.id ?? "Belum tersedia"}</p>
+            </article>
           </div>
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              <p className="font-mono text-[10px] text-emerald-500 uppercase tracking-widest">Menunggu Scan QR</p>
-            </div>
-            <p className="text-sm font-medium text-slate-300 leading-relaxed">
-              Scan QR ini dengan aplikasi WhatsApp Anda untuk menyambungkan bot pencatatan.
+
+          <div className="mt-6 flex flex-wrap gap-3">
+            <button className="button-primary gap-2" disabled={isPending} onClick={() => void mutate("ensure")}>
+              <RefreshCw className={`h-4 w-4 ${isPending ? "animate-spin" : ""}`} />
+              {isPending ? "Memproses..." : "Sambungkan / scan QR"}
+            </button>
+            <button className="button-secondary gap-2" disabled={isPending} onClick={() => void mutate("disconnect")}>
+              <Unplug className="h-4 w-4" />
+              Putuskan koneksi
+            </button>
+          </div>
+
+          {!data?.configured && (
+            <p className="mt-5 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+              Konfigurasi API WhatsApp belum lengkap di environment variables.
             </p>
-          </div>
+          )}
         </div>
-      )}
 
-      {error && <p className="mt-6 font-mono text-[10px] text-rose-500 uppercase tracking-wider">{error}</p>}
+        <div className="surface-muted p-5">
+          <p className="eyebrow">Langkah koneksi</p>
+          <div className="mt-5 space-y-4">
+            {[
+              "Klik tombol sambungkan untuk memastikan sesi WAHA aktif.",
+              "Scan QR yang muncul memakai aplikasi WhatsApp Anda.",
+              "Setelah status aktif, lanjutkan ke verifikasi nomor pribadi di kartu berikutnya."
+            ].map((step, index) => (
+              <div key={step} className="flex gap-3 rounded-[1.25rem] bg-white/80 px-4 py-4">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#fff6ea] text-coral">
+                  {index + 1}
+                </span>
+                <p className="text-sm leading-6 text-slate-600">{step}</p>
+              </div>
+            ))}
+          </div>
+
+          {data?.qr ? (
+            <div className="mt-6 rounded-[1.5rem] border border-[#ddd4c5] bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-moss">
+                  <QrCode className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className="field-label">QR siap discan</p>
+                  <p className="mt-1 text-sm text-slate-600">Buka WhatsApp lalu scan kode di bawah ini.</p>
+                </div>
+              </div>
+
+              <img
+                alt="WAHA QR"
+                className="mt-5 aspect-square w-full rounded-[1.25rem] border border-[#ece2d2] bg-white p-4"
+                src={data.qr.startsWith("data:") ? data.qr : `data:image/png;base64,${data.qr}`}
+              />
+            </div>
+          ) : (
+            <div className="mt-6 rounded-[1.5rem] border border-dashed border-[#ddd4c5] bg-white/60 px-5 py-10 text-center">
+              <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white text-moss shadow-sm">
+                <CheckCircle2 className="h-5 w-5" />
+              </span>
+              <p className="mt-4 text-sm leading-6 text-slate-600">
+                QR akan muncul di sini ketika sesi meminta scan dari perangkat Anda.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {error && <p className="mt-5 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p>}
     </div>
   );
 }

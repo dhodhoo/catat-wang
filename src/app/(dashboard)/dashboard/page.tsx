@@ -1,3 +1,4 @@
+import { ArrowDownRight, ArrowUpRight, Landmark } from "lucide-react";
 import { CashflowChart } from "@/components/dashboard/cashflow-chart";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { requireCurrentUser } from "@/lib/insforge/auth";
@@ -12,36 +13,65 @@ export default async function DashboardPage() {
   const series = await getCashflowSeries(accessToken, user.id);
 
   return (
-    <DashboardShell
-      title="Dashboard"
-      subtitle="Pantau arus kas dan transaksi Anda secara real-time."
-    >
-      <div className="space-y-10">
-        <section className="grid gap-6 md:grid-cols-3">
-          {[
-            { label: "Pemasukan", value: summary.incomeTotal, trend: "income", color: "text-emerald-400" },
-            { label: "Pengeluaran", value: summary.expenseTotal, trend: "expense", color: "text-rose-400" },
-            { label: "Selisih", value: summary.netCashflow, trend: "neutral", color: "text-white" },
-          ].map((item) => (
-            <article key={item.label} className="group relative rounded-3xl bg-slate-900/40 p-1 backdrop-blur-sm transition-all hover:bg-slate-900/60 glow-card border border-slate-800">
-              <div className="p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500">{item.label}</p>
-                  <div className={`h-1.5 w-1.5 rounded-full ${item.trend === 'income' ? 'bg-emerald-500' : item.trend === 'expense' ? 'bg-rose-500' : 'bg-slate-500'}`} />
-                </div>
-                <h2 className={`text-4xl font-mono tabular-nums tracking-tight ${item.color}`}>
-                  {formatCurrency(item.value)}
-                </h2>
-              </div>
-            </article>
-          ))}
+    <DashboardShell title="Dashboard" subtitle="Pantau kondisi keuangan terbaru lewat ringkasan yang cepat dipahami.">
+      <div className="space-y-8">
+        <section className="grid gap-4 md:grid-cols-3">
+            {[
+              {
+                label: "Pemasukan",
+                value: summary.incomeTotal,
+                icon: ArrowUpRight,
+                accent: "text-moss",
+                tint: "bg-emerald-50"
+              },
+              {
+                label: "Pengeluaran",
+                value: summary.expenseTotal,
+                icon: ArrowDownRight,
+                accent: "text-coral",
+                tint: "bg-rose-50"
+              },
+              {
+                label: "Selisih",
+                value: summary.netCashflow,
+                icon: Landmark,
+                accent: summary.netCashflow >= 0 ? "text-ink" : "text-coral",
+                tint: summary.netCashflow >= 0 ? "bg-[#f8f3ea]" : "bg-rose-50"
+              }
+            ].map((item) => {
+              const Icon = item.icon;
+              return (
+                <article key={item.label} className="surface-card glow-card overflow-hidden p-7">
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between gap-4">
+                      <p className="eyebrow">{item.label}</p>
+                      <span
+                        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${item.tint} ${item.accent}`}
+                      >
+                        <Icon className="h-5 w-5" />
+                      </span>
+                    </div>
+                    <p className={`metric-value min-w-0 ${item.accent}`}>{formatCurrency(item.value)}</p>
+                  </div>
+                </article>
+              );
+            })}
         </section>
 
-        <section className="rounded-3xl border border-slate-800 bg-slate-900/40 p-8 backdrop-blur-md glow-card relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-            <span className="font-mono text-8xl">DATA</span>
+        <section className="surface-panel overflow-hidden p-6 sm:p-8">
+          <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr] xl:items-start">
+            <CashflowChart data={series} />
+
+            <div className="surface-muted p-5 sm:p-6">
+              <p className="eyebrow">Cara membaca grafik</p>
+              <h2 className="mt-3 text-2xl text-ink">Pantau arah uang masuk dan keluar dalam satu pandangan.</h2>
+              <ul className="mt-5 space-y-3 text-sm leading-7 text-slate-600">
+                <li>Garis hijau membantu Anda melihat ritme pemasukan dalam 7 hari terakhir.</li>
+                <li>Garis coral menyorot hari-hari dengan pengeluaran tertinggi.</li>
+                <li>Kalau pola mulai turun, buka histori transaksi untuk audit cepat dan koreksi kategori.</li>
+              </ul>
+            </div>
           </div>
-          <CashflowChart data={series} />
         </section>
       </div>
     </DashboardShell>

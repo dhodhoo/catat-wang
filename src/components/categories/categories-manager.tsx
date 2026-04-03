@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { ArrowDownCircle, ArrowUpCircle, Pencil, Trash2 } from "lucide-react";
 
 interface CategoryItem {
   id: string;
@@ -21,7 +22,18 @@ export function CategoriesManager({ initialCategories }: { initialCategories: Ca
   const [message, setMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  const activeCategories = categories.filter((category) => !category.is_archived);
+  const activeCategories = useMemo(
+    () => categories.filter((category) => !category.is_archived),
+    [categories]
+  );
+
+  const groupedCategories = useMemo(
+    () => ({
+      income: activeCategories.filter((category) => category.type === "income"),
+      expense: activeCategories.filter((category) => category.type === "expense")
+    }),
+    [activeCategories]
+  );
 
   async function handleCreate() {
     if (!name.trim()) return;
@@ -50,6 +62,7 @@ export function CategoriesManager({ initialCategories }: { initialCategories: Ca
     if (!editingName.trim()) return;
     try {
       setIsSaving(true);
+      setMessage(null);
       const response = await fetch(`/api/categories/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -72,6 +85,7 @@ export function CategoriesManager({ initialCategories }: { initialCategories: Ca
     if (!window.confirm(`Hapus kategori "${category.name}"?`)) return;
     try {
       setIsSaving(true);
+      setMessage(null);
       const response = await fetch(`/api/categories/${category.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -89,112 +103,168 @@ export function CategoriesManager({ initialCategories }: { initialCategories: Ca
   }
 
   return (
-    <div className="space-y-12">
-      <section className="rounded-3xl border border-slate-800 bg-slate-900/40 p-8 backdrop-blur-md glow-card relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-          <span className="font-mono text-4xl uppercase">KATEGORI</span>
-        </div>
-        <div className="mb-8">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-emerald-500">Master Data</p>
-          <h2 className="text-2xl font-bold tracking-tight">Kategori Baru</h2>
-        </div>
-        
-        <div className="flex flex-col gap-6 md:flex-row md:items-end">
-          <div className="flex-1 space-y-2">
-            <label className="font-mono text-[10px] uppercase tracking-wider text-slate-500" htmlFor="node-name">NAMA KATEGORI</label>
-            <input
-              className="w-full bg-slate-950 rounded-xl border border-slate-800 px-4 py-3 text-slate-200 outline-none focus:border-emerald-500/50 transition-all placeholder:text-slate-700"
-              id="node-name"
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Contoh: Jajan Bakso"
-              value={name}
-            />
+    <div className="space-y-6">
+      <section className="surface-panel p-6 sm:p-7">
+        <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+          <div className="space-y-4">
+            <p className="eyebrow">Master kategori</p>
+            <h2 className="text-3xl text-ink">Kelompokkan pemasukan dan pengeluaran agar pencatatan terasa lebih tertib.</h2>
+            <p className="max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+              Kategori yang rapi membantu sistem membaca transaksi lebih akurat, sekaligus membuat laporan bulanan
+              lebih mudah dipahami.
+            </p>
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              <article className="surface-muted p-4">
+                <p className="eyebrow">Total aktif</p>
+                <p className="mt-4 text-3xl text-ink">{activeCategories.length}</p>
+              </article>
+              <article className="surface-muted p-4">
+                <p className="eyebrow">Pemasukan</p>
+                <p className="mt-4 text-3xl text-moss">{groupedCategories.income.length}</p>
+              </article>
+              <article className="surface-muted p-4">
+                <p className="eyebrow">Pengeluaran</p>
+                <p className="mt-4 text-3xl text-coral">{groupedCategories.expense.length}</p>
+              </article>
+            </div>
           </div>
-          <div className="w-full md:w-56 space-y-2">
-            <label className="font-mono text-[10px] uppercase tracking-wider text-slate-500" htmlFor="node-type">TIPE</label>
-            <select
-              className="w-full bg-slate-950 rounded-xl border border-slate-800 px-4 py-3 text-slate-200 outline-none focus:border-emerald-500/50 transition-all appearance-none"
-              id="node-type"
-              onChange={(e) => setType(e.target.value as any)}
-              value={type}
-            >
-              <option value="expense">PENGELUARAN</option>
-              <option value="income">PEMASUKAN</option>
-            </select>
+
+          <div className="surface-muted p-5">
+            <p className="eyebrow">Tambah kategori baru</p>
+            <div className="mt-5 space-y-4">
+              <label className="space-y-2">
+                <span className="field-label">Nama kategori</span>
+                <input
+                  className="field-input"
+                  id="category-name"
+                  onChange={(event) => setName(event.target.value)}
+                  placeholder="Contoh: Transport online"
+                  value={name}
+                />
+              </label>
+
+              <label className="space-y-2">
+                <span className="field-label">Tipe</span>
+                <select className="field-select" onChange={(event) => setType(event.target.value as "income" | "expense")} value={type}>
+                  <option value="expense">Pengeluaran</option>
+                  <option value="income">Pemasukan</option>
+                </select>
+              </label>
+
+              <button className="button-primary w-full justify-center" disabled={isSaving || !name.trim()} onClick={handleCreate}>
+                {isSaving ? "Menyimpan..." : "Tambah kategori"}
+              </button>
+
+              {message && <p className="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">{message}</p>}
+            </div>
           </div>
-          <button
-            className="rounded-xl bg-emerald-500 px-8 py-3.5 font-bold text-slate-950 hover:bg-emerald-400 transition-all active:scale-95 disabled:opacity-50 h-[52px]"
-            disabled={isSaving || !name.trim()}
-            onClick={handleCreate}
-          >
-            TAMBAH
-          </button>
         </div>
-        {message && <p className="mt-4 font-mono text-[10px] text-rose-500 uppercase tracking-tight">{message}</p>}
       </section>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {activeCategories.map((category) => {
-          const isEditing = editingId === category.id;
+      <div className="grid gap-6 xl:grid-cols-2">
+        {[
+          {
+            key: "expense",
+            title: "Kategori pengeluaran",
+            description: "Pakai kategori yang spesifik supaya pola belanja cepat terlihat.",
+            items: groupedCategories.expense,
+            accent: "text-coral",
+            icon: ArrowDownCircle
+          },
+          {
+            key: "income",
+            title: "Kategori pemasukan",
+            description: "Pisahkan sumber pemasukan agar laporan bulanan lebih informatif.",
+            items: groupedCategories.income,
+            accent: "text-moss",
+            icon: ArrowUpCircle
+          }
+        ].map((group) => {
+          const Icon = group.icon;
+
           return (
-            <article key={category.id} className="group relative rounded-3xl border border-slate-800 bg-slate-900/40 p-6 backdrop-blur-sm transition-all hover:bg-slate-900/60 glow-card">
-              <div className="flex items-start justify-between mb-6">
-                <div className="min-w-0 flex-1">
-                  {isEditing ? (
-                    <input
-                      autoFocus
-                      className="w-full bg-slate-950 rounded-lg border border-emerald-500/50 px-3 py-1.5 text-sm outline-none font-bold text-white transition-all"
-                      onChange={(e) => setEditingName(e.target.value)}
-                      value={editingName}
-                    />
-                  ) : (
-                    <h3 className="text-xl font-bold tracking-tight text-white group-hover:text-emerald-400 transition-colors uppercase">{category.name}</h3>
-                  )}
-                  <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-slate-500">
-                    {category.type === "income" ? "PEMASUKAN" : "PENGELUARAN"}
-                  </p>
+            <section key={group.key} className="surface-card p-5 sm:p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="eyebrow">{group.title}</p>
+                  <h3 className="mt-3 text-3xl text-ink">{group.items.length} kategori aktif</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{group.description}</p>
                 </div>
-                <span className={`rounded-lg px-2 py-1 text-[8px] font-mono tracking-widest uppercase ${category.is_default ? 'bg-slate-800 text-slate-400' : 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'}`}>
-                  {category.is_default ? "DEFAULT" : "CUSTOM"}
+                <span className={`flex h-12 w-12 items-center justify-center rounded-full bg-white ${group.accent}`}>
+                  <Icon className="h-5 w-5" />
                 </span>
               </div>
-              
-              <div className="flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                {isEditing ? (
-                  <>
-                    <button
-                      className="text-[10px] font-mono border border-emerald-900 bg-emerald-950/30 text-emerald-400 hover:bg-emerald-900/50 px-3 py-1.5 rounded-lg transition-all"
-                      onClick={() => handleUpdate(category.id)}
-                    >
-                      SIMPAN
-                    </button>
-                    <button
-                      className="text-[10px] font-mono border border-slate-700 text-slate-400 hover:bg-slate-800 px-3 py-1.5 rounded-lg transition-all"
-                      onClick={() => setEditingId(null)}
-                    >
-                      BATAL
-                    </button>
-                  </>
+
+              <div className="mt-6 space-y-4">
+                {group.items.length === 0 ? (
+                  <div className="surface-muted p-5 text-sm text-slate-500">Belum ada kategori pada grup ini.</div>
                 ) : (
-                  <>
-                    <button
-                      className="text-[10px] font-mono border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-all"
-                      onClick={() => { setEditingId(category.id); setEditingName(category.name); }}
-                    >
-                      EDIT
-                    </button>
-                    {!category.is_default && (
-                      <button
-                        className="text-[10px] font-mono border border-rose-900 bg-rose-950/30 text-rose-400 hover:bg-rose-900/50 px-3 py-1.5 rounded-lg transition-all"
-                        onClick={() => handleArchive(category)}
-                      >
-                        HAPUS
-                      </button>
-                    )}
-                  </>
+                  group.items.map((category) => {
+                    const isEditing = editingId === category.id;
+
+                    return (
+                      <article key={category.id} className="surface-muted p-4">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="min-w-0 flex-1">
+                            {isEditing ? (
+                              <input
+                                autoFocus
+                                className="field-input"
+                                onChange={(event) => setEditingName(event.target.value)}
+                                value={editingName}
+                              />
+                            ) : (
+                              <h4 className="text-xl text-ink">{category.name}</h4>
+                            )}
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              <span className={`rounded-full px-3 py-1 text-xs font-medium ${group.accent} bg-white`}>
+                                {category.type === "income" ? "Pemasukan" : "Pengeluaran"}
+                              </span>
+                              <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-600">
+                                {category.is_default ? "Default" : "Custom"}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap gap-2">
+                            {isEditing ? (
+                              <>
+                                <button className="button-primary px-4 py-2" onClick={() => void handleUpdate(category.id)}>
+                                  Simpan
+                                </button>
+                                <button className="button-secondary px-4 py-2" onClick={() => setEditingId(null)}>
+                                  Batal
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  className="button-secondary gap-2 px-4 py-2"
+                                  onClick={() => {
+                                    setEditingId(category.id);
+                                    setEditingName(category.name);
+                                  }}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                  Edit
+                                </button>
+                                {!category.is_default && (
+                                  <button className="button-danger gap-2" onClick={() => void handleArchive(category)}>
+                                    <Trash2 className="h-4 w-4" />
+                                    Hapus
+                                  </button>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  })
                 )}
               </div>
-            </article>
+            </section>
           );
         })}
       </div>

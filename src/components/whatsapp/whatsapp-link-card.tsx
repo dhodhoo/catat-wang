@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { KeyRound, Phone, Send } from "lucide-react";
 
 export function WhatsAppLinkCard({
   defaultPhone = "",
@@ -39,65 +40,81 @@ export function WhatsAppLinkCard({
   }
 
   return (
-    <div className="rounded-3xl border border-slate-800 bg-slate-900/40 p-10 backdrop-blur-md glow-card relative overflow-hidden">
-      <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-        <span className="font-mono text-4xl uppercase">HUBUNGKAN</span>
-      </div>
+    <div className="surface-card p-6 sm:p-7">
+      <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+        <div>
+          <p className="eyebrow">Verifikasi nomor</p>
+          <h2 className="mt-3 text-3xl text-ink">Hubungkan nomor pribadi Anda ke workspace ini.</h2>
+          <p className="mt-3 max-w-xl text-sm leading-7 text-slate-600 sm:text-base">
+            Setelah sesi WhatsApp aktif, masukkan nomor Anda untuk mendapatkan kode verifikasi yang akan
+            menghubungkan chat dengan akun CatatWang.
+          </p>
 
-      <div className="mb-10 space-y-1">
-        <p className="font-mono text-[10px] uppercase tracking-widest text-emerald-500">Verifikasi Nomor</p>
-        <h2 className="text-3xl font-bold tracking-tight text-white">Hubungkan Akun</h2>
-        <p className="text-sm text-slate-400 font-medium leading-relaxed max-w-md">
-          Masukkan nomor WhatsApp Anda untuk mendapatkan kode verifikasi agar bisa mencatat transaksi.
-        </p>
-      </div>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <article className="surface-muted p-4">
+              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-moss shadow-sm">
+                <Phone className="h-5 w-5" />
+              </span>
+              <p className="mt-5 text-sm text-slate-500">Nomor bot aktif</p>
+              <p className="mt-2 text-xl text-ink">{botNumber ?? "Belum terdeteksi"}</p>
+            </article>
 
-      <div className="space-y-6 max-w-md">
-        <label className="block space-y-2">
-          <span className="font-mono text-[10px] uppercase tracking-wider text-slate-500">NOMOR WHATSAPP</span>
-          <input
-            className="w-full bg-slate-950 rounded-xl border border-slate-800 px-4 py-3 text-slate-200 outline-none focus:border-emerald-500/50 transition-all placeholder:text-slate-700 font-mono"
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="+62812XXXX"
-            type="tel"
-            value={phone}
-          />
-        </label>
-
-        <button
-          className="rounded-xl bg-emerald-500 px-8 py-3.5 font-bold text-xs tracking-tight text-slate-950 hover:bg-emerald-400 transition-all active:scale-95 disabled:opacity-50"
-          disabled={isLoading || !phone}
-          onClick={() => { void generateCode(); }}
-        >
-          {isLoading ? "MEMPROSES..." : "DAPATKAN KODE"}
-        </button>
-
-        {botNumber && (
-          <div className="flex items-center gap-3 py-2">
-            <span className="font-mono text-[10px] uppercase text-slate-500">NOMOR BOT:</span>
-            <span className="text-[10px] font-bold text-emerald-500/80 tracking-tighter">{botNumber}</span>
+            <article className="surface-muted p-4">
+              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-coral shadow-sm">
+                <Send className="h-5 w-5" />
+              </span>
+              <p className="mt-5 text-sm text-slate-500">Langkah berikutnya</p>
+              <p className="mt-2 text-xl text-ink">Kirim kode ke bot setelah kode diterima.</p>
+            </article>
           </div>
-        )}
+        </div>
 
-        {result && (
-          <div className="mt-8 p-6 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 animate-in slide-in-from-bottom-4">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <p className="font-mono text-[10px] uppercase tracking-widest text-emerald-500">Kode Verifikasi</p>
-                <div className="text-3xl font-mono font-bold text-white tracking-widest mt-1">{result.linkCode}</div>
+        <div className="surface-muted p-5">
+          <label className="space-y-2">
+            <span className="field-label">Nomor WhatsApp</span>
+            <input
+              className="field-input"
+              onChange={(event) => setPhone(event.target.value)}
+              placeholder="+62812xxxxxxx"
+              type="tel"
+              value={phone}
+            />
+          </label>
+
+          <button className="button-primary mt-5 w-full justify-center" disabled={isLoading || !phone} onClick={() => void generateCode()}>
+            {isLoading ? "Memproses..." : "Dapatkan kode verifikasi"}
+          </button>
+
+          {result && (
+            <div className="mt-5 rounded-[1.5rem] border border-emerald-100 bg-white px-5 py-5 shadow-sm">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="eyebrow">Kode verifikasi</p>
+                  <div className="mt-3 flex items-center gap-3">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-moss">
+                      <KeyRound className="h-5 w-5" />
+                    </span>
+                    <div className="text-3xl tracking-[0.22em] text-ink">{result.linkCode}</div>
+                  </div>
+                </div>
+                <p className="text-right text-xs leading-5 text-slate-500">
+                  Berlaku sampai
+                  <br />
+                  {new Date(result.expiresAt).toLocaleTimeString("id-ID", {
+                    hour: "2-digit",
+                    minute: "2-digit"
+                  })}
+                </p>
               </div>
-              <div className="text-[10px] font-mono text-slate-500 text-right uppercase">
-                BERLAKU SAMPAI:<br/>
-                {new Date(result.expiresAt).toLocaleTimeString()}
+
+              <div className="mt-5 rounded-[1.25rem] bg-[#fffaf1] px-4 py-3 text-sm leading-6 text-slate-600">
+                {result.instructions}
               </div>
             </div>
-            <p className="text-xs text-slate-400 leading-relaxed font-medium pt-4 border-t border-slate-800/50 italic">
-              {result.instructions}
-            </p>
-          </div>
-        )}
+          )}
 
-        {error && <p className="text-xs font-mono text-rose-500 uppercase tracking-tight">{error}</p>}
+          {error && <p className="mt-4 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p>}
+        </div>
       </div>
     </div>
   );
