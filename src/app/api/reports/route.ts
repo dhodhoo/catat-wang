@@ -26,3 +26,27 @@ export async function GET() {
     return NextResponse.json({ message: error.message }, { status: 500 });
   }
 }
+
+export async function POST(req: Request) {
+  try {
+    const user = await requireCurrentUser();
+    const accessToken = await getAccessTokenFromCookies();
+
+    if (!accessToken) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    const { month, year } = await req.json();
+
+    const client = createInsforgeServerClient(accessToken);
+    const { data, error } = await client.functions.invoke("generate-monthly-report", {
+      body: { month, year }
+    });
+
+    if (error) throw error;
+
+    return NextResponse.json({ success: true, data });
+  } catch (error: any) {
+    return NextResponse.json({ message: error.message }, { status: 500 });
+  }
+}

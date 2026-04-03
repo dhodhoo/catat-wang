@@ -34,12 +34,9 @@ export function ReportsView({ initialReports }: { initialReports: MonthlyReport[
 
     setIsGenerating(true);
     try {
-      const response = await fetch("https://9xgda9vu.functions.insforge.app/functions/generate-monthly-report", {
+      const response = await fetch("/api/reports", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${document.cookie.split('insforge-access-token=')[1]?.split(';')[0]}`
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ month, year })
       });
 
