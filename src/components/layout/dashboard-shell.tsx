@@ -1,14 +1,26 @@
+"use client";
+
 import type { Route } from "next";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import type { ComponentType } from "react";
+import {
+  BellRing,
+  ChartColumnBig,
+  LayoutGrid,
+  ListOrdered,
+  MessageCircleMore,
+  Shapes
+} from "lucide-react";
 import { LogoutButton } from "@/components/layout/logout-button";
 
-const navItems: Array<{ href: string; label: string }> = [
-  { href: "/dashboard", label: "Beranda" },
-  { href: "/transactions", label: "Transaksi" },
-  { href: "/reports", label: "Laporan" },
-  { href: "/categories", label: "Kategori" },
-  { href: "/reminders", label: "Pengingat" },
-  { href: "/settings/whatsapp", label: "WhatsApp" }
+const navItems: Array<{ href: Route; label: string; icon: ComponentType<{ className?: string }> }> = [
+  { href: "/dashboard", label: "Beranda", icon: LayoutGrid },
+  { href: "/transactions", label: "Transaksi", icon: ListOrdered },
+  { href: "/reports", label: "Laporan", icon: ChartColumnBig },
+  { href: "/categories", label: "Kategori", icon: Shapes },
+  { href: "/reminders", label: "Pengingat", icon: BellRing },
+  { href: "/settings/whatsapp", label: "WhatsApp", icon: MessageCircleMore }
 ];
 
 export function DashboardShell({
@@ -20,47 +32,89 @@ export function DashboardShell({
   subtitle: string;
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50 relative overflow-hidden">
-      {/* Precision Background Pattern */}
-      <div className="absolute inset-0 dashboard-grid pointer-events-none opacity-20" />
-      <div className="absolute top-0 left-0 right-0 h-[500px] bg-emerald-500/10 blur-[120px] pointer-events-none" />
-      
-      <div className="relative mx-auto max-w-6xl px-6 py-10">
-        <header className="mb-12 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between border-b border-slate-800 pb-10">
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
-              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-emerald-500/80">
-                Pencatat Wang / v1.0.4
-              </p>
+    <div className="relative min-h-screen overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 app-backdrop" />
+      <div className="pointer-events-none absolute inset-0 dashboard-grid opacity-40" />
+      <div className="relative mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
+        <header className="surface-panel sticky top-4 z-20 mb-8 p-4 sm:p-6">
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+              <div className="space-y-4">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="status-chip">
+                    <span className="h-2 w-2 rounded-full bg-moss" />
+                    CatatWang workspace
+                  </span>
+                  <span className="stat-chip">WhatsApp-first finance tracker</span>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="eyebrow">Pusat kendali keuangan pribadi</p>
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                    <div className="max-w-3xl">
+                      <h1 className="section-title text-balance">{title}</h1>
+                      <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+                        {subtitle}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="status-chip">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  Siap dipakai hari ini
+                </span>
+                <LogoutButton />
+              </div>
             </div>
-            <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-br from-white to-slate-400 bg-clip-text text-transparent">
-              {title}
-            </h1>
-            <p className="max-w-md text-sm text-slate-400 font-medium">
-              {subtitle}
-            </p>
+
+            <nav className="grid gap-2 sm:grid-cols-2 xl:grid-cols-6">
+              {navItems.map((item) => {
+                const isActive =
+                  pathname === item.href ||
+                  (item.href !== "/dashboard" && pathname.startsWith(item.href));
+                const Icon = item.icon;
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`group flex items-center gap-3 rounded-[1.25rem] border px-4 py-3 transition-all ${
+                      isActive
+                        ? "border-moss/20 bg-moss text-white shadow-[0_16px_30px_rgba(53,89,74,0.18)]"
+                        : "border-[#e2d8c8] bg-[#fffaf2]/70 text-slate-600 hover:border-moss/20 hover:bg-white hover:text-moss"
+                    }`}
+                  >
+                    <span
+                      className={`flex h-9 w-9 items-center justify-center rounded-full transition ${
+                        isActive ? "bg-white/18 text-white" : "bg-white text-slate-500 group-hover:text-moss"
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold">{item.label}</p>
+                      <p
+                        className={`mt-0.5 text-[11px] ${
+                          isActive ? "text-white/70" : "text-slate-500"
+                        }`}
+                      >
+                        {isActive ? "Sedang dibuka" : "Buka halaman"}
+                      </p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </nav>
           </div>
-          
-          <nav className="flex flex-wrap gap-1 p-1 rounded-2xl bg-slate-900/50 backdrop-blur-xl border border-slate-800">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href as any}
-                className="rounded-xl px-5 py-2.5 text-xs font-bold tracking-wide transition-all hover:text-emerald-400 active:scale-95"
-              >
-                {item.label}
-              </Link>
-            ))}
-            <div className="mx-2 w-px h-8 bg-slate-800 self-center" />
-            <LogoutButton />
-          </nav>
         </header>
 
-        <main className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-          {children}
-        </main>
+        <main className="space-y-8">{children}</main>
       </div>
     </div>
   );

@@ -58,25 +58,26 @@ export function VerifyEmailCard({ defaultEmail = "" }: { defaultEmail?: string }
   }
 
   return (
-    <div className="w-full max-w-md rounded-[2rem] bg-white p-8 shadow-card">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold">Verifikasi email</h1>
-        <p className="mt-2 text-sm text-slate-500">
-          Masukkan email dan kode 6 digit. Jika kode belum masuk, kirim ulang dari halaman ini.
+    <div className="surface-panel w-full max-w-xl p-8 sm:p-10">
+      <div className="mb-8 border-b border-[#e8ddcc] pb-6">
+        <p className="eyebrow">Verifikasi email</p>
+        <h1 className="mt-3 text-3xl text-ink sm:text-[2.5rem]">Aktifkan akun Anda</h1>
+        <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
+          Masukkan email dan kode 6 digit. Jika kode belum masuk, Anda bisa mengirim ulang dari halaman ini.
         </p>
       </div>
 
       <form
-        className="space-y-4"
+        className="space-y-5"
         onSubmit={async (event) => {
           event.preventDefault();
           await verify();
         }}
       >
         <label className="block space-y-2">
-          <span className="text-sm font-medium text-slate-700">Email</span>
+          <span className="field-label">Email</span>
           <input
-            className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-coral"
+            className="field-input"
             name="email"
             onChange={(event) => setEmail(event.target.value)}
             placeholder="nama@email.com"
@@ -87,9 +88,9 @@ export function VerifyEmailCard({ defaultEmail = "" }: { defaultEmail?: string }
         </label>
 
         <label className="block space-y-2">
-          <span className="text-sm font-medium text-slate-700">Kode OTP</span>
+          <span className="field-label">Kode OTP</span>
           <input
-            className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-coral"
+            className="field-input"
             inputMode="numeric"
             maxLength={6}
             name="otp"
@@ -102,16 +103,12 @@ export function VerifyEmailCard({ defaultEmail = "" }: { defaultEmail?: string }
           />
         </label>
 
-        <button
-          className="w-full rounded-2xl bg-coral px-4 py-3 font-semibold text-white"
-          disabled={isVerifying}
-          type="submit"
-        >
+        <button className="button-primary w-full justify-center" disabled={isVerifying} type="submit">
           {isVerifying ? "Memverifikasi..." : "Verifikasi"}
         </button>
 
         <button
-          className="w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold text-slate-700"
+          className="button-secondary w-full justify-center"
           disabled={isResending || !email}
           onClick={() => {
             void resend();
@@ -121,12 +118,20 @@ export function VerifyEmailCard({ defaultEmail = "" }: { defaultEmail?: string }
           {isResending ? "Mengirim ulang..." : "Kirim ulang kode"}
         </button>
 
-        <p className="text-xs text-slate-500">
-          Jika inbox kosong, cek folder spam, promotions, atau social. Pengiriman bisa terlambat beberapa menit.
+        <p className="rounded-[1.25rem] border border-[#ece2d2] bg-[#fffaf1] px-4 py-3 text-sm leading-6 text-slate-500">
+          Jika inbox kosong, cek folder spam, promotions, atau social. Pengiriman email bisa terlambat beberapa menit.
         </p>
 
-        {message ? <p className="text-sm text-moss">{message}</p> : null}
-        {error ? <p className="text-sm text-red-600">{error}</p> : null}
+        {message ? (
+          <p className="rounded-[1.25rem] border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            {message}
+          </p>
+        ) : null}
+        {error ? (
+          <p className="rounded-[1.25rem] border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            {error}
+          </p>
+        ) : null}
       </form>
     </div>
   );

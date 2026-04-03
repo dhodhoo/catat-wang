@@ -5,70 +5,100 @@ import type { CashflowBucket } from "@/types/domain";
 import { formatCurrency } from "@/lib/utils/format";
 
 export function CashflowChart({ data }: { data: CashflowBucket[] }) {
-  return (
-    <div className="h-80 w-full">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h2 className="text-xs font-mono uppercase tracking-[0.3em] text-slate-500">Arus Kas / 7 Hari Terakhir</h2>
-          <p className="text-sm font-medium text-slate-300">Perbandingan pemasukan dan pengeluaran Anda.</p>
+  if (data.length === 0) {
+    return (
+      <div className="surface-muted flex min-h-[320px] items-center justify-center p-8 text-center">
+        <div className="max-w-md">
+          <p className="eyebrow">Belum ada data</p>
+          <h2 className="mt-3 text-2xl text-ink">Grafik akan muncul setelah transaksi mulai tercatat.</h2>
+          <p className="mt-3 text-sm leading-7 text-slate-600">
+            Begitu ada pemasukan atau pengeluaran yang masuk, halaman ini akan membantu Anda membaca polanya dengan
+            jauh lebih cepat.
+          </p>
         </div>
-        <div className="flex gap-4">
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" />
-            <span className="text-[10px] font-mono text-slate-400">MASUK</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-[320px] w-full">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="eyebrow">Arus kas 7 hari terakhir</p>
+          <h2 className="mt-3 text-3xl text-ink">Pemasukan dan pengeluaran harian</h2>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            Gunakan grafik ini untuk melihat ritme uang masuk dan uang keluar tanpa membaca transaksi satu per satu.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <div className="status-chip">
+            <span className="h-2.5 w-2.5 rounded-full bg-moss" />
+            Pemasukan
           </div>
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-rose-500" />
-            <span className="text-[10px] font-mono text-slate-400">KELUAR</span>
+          <div className="status-chip">
+            <span className="h-2.5 w-2.5 rounded-full bg-coral" />
+            Pengeluaran
           </div>
         </div>
       </div>
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+
+      <ResponsiveContainer height={280} width="100%">
+        <AreaChart data={data} margin={{ top: 10, right: 8, left: -20, bottom: 0 }}>
           <defs>
             <linearGradient id="incomeFill" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
-              <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+              <stop offset="5%" stopColor="#35594a" stopOpacity={0.24} />
+              <stop offset="95%" stopColor="#35594a" stopOpacity={0.02} />
             </linearGradient>
             <linearGradient id="expenseFill" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.2} />
-              <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
+              <stop offset="5%" stopColor="#ef6f52" stopOpacity={0.24} />
+              <stop offset="95%" stopColor="#ef6f52" stopOpacity={0.02} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#2dd4bf" strokeOpacity={0.05} vertical={false} />
-          <XAxis 
-            dataKey="label" 
-            axisLine={false} 
-            tickLine={false} 
-            tick={{ fill: '#64748b', fontSize: 10, fontFamily: 'monospace' }}
-            dy={10}
+
+          <CartesianGrid stroke="#e9e0d1" strokeDasharray="4 4" vertical={false} />
+          <XAxis
+            axisLine={false}
+            dataKey="label"
+            dy={12}
+            tick={{ fill: "#667085", fontSize: 11, fontFamily: "var(--font-mono)" }}
+            tickLine={false}
           />
-          <YAxis 
-            axisLine={false} 
-            tickLine={false} 
-            tick={{ fill: '#64748b', fontSize: 10, fontFamily: 'monospace' }}
+          <YAxis
+            axisLine={false}
+            tick={{ fill: "#667085", fontSize: 11, fontFamily: "var(--font-mono)" }}
             tickFormatter={(value) => `${Math.round(Number(value) / 1000)}k`}
+            tickLine={false}
+            width={54}
           />
-          <Tooltip 
-            contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }}
-            itemStyle={{ fontSize: '12px', fontFamily: 'monospace' }}
-            formatter={(value: number) => [formatCurrency(value), ""]}
+          <Tooltip
+            contentStyle={{
+              backgroundColor: "rgba(255, 255, 255, 0.96)",
+              border: "1px solid #ddd4c5",
+              borderRadius: "18px",
+              boxShadow: "0 18px 40px rgba(16, 24, 40, 0.12)"
+            }}
+            formatter={(value: number, key: string) => [
+              formatCurrency(value),
+              key === "incomeTotal" ? "Pemasukan" : "Pengeluaran"
+            ]}
+            itemStyle={{ color: "#475467", fontSize: "12px" }}
+            labelStyle={{ color: "#101828", fontWeight: 600, marginBottom: "6px" }}
           />
-          <Area 
-            type="monotone" 
-            dataKey="incomeTotal" 
-            stroke="#10b981" 
-            strokeWidth={2}
-            fill="url(#incomeFill)" 
-            animationDuration={500}
+          <Area
+            animationDuration={600}
+            dataKey="incomeTotal"
+            fill="url(#incomeFill)"
+            stroke="#35594a"
+            strokeWidth={2.5}
+            type="monotone"
           />
-          <Area 
-            type="monotone" 
-            dataKey="expenseTotal" 
-            stroke="#f43f5e" 
-            strokeWidth={2}
-            fill="url(#expenseFill)" 
-            animationDuration={500}
+          <Area
+            animationDuration={600}
+            dataKey="expenseTotal"
+            fill="url(#expenseFill)"
+            stroke="#ef6f52"
+            strokeWidth={2.5}
+            type="monotone"
           />
         </AreaChart>
       </ResponsiveContainer>
