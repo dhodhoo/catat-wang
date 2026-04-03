@@ -37,9 +37,7 @@ export function ReminderSettingsForm({ initialSettings }: ReminderSettingsFormPr
       setMessage(null);
       const response = await fetch("/api/reminders/settings", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           enabled,
           frequency: enabled ? frequency : null,
@@ -47,101 +45,93 @@ export function ReminderSettingsForm({ initialSettings }: ReminderSettingsFormPr
           weekday: enabled && frequency === "weekly" ? weekday : null
         })
       });
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.message ?? "Gagal menyimpan reminder.");
-      }
-
-      setMessage("Setting reminder berhasil disimpan.");
+      if (!response.ok) throw new Error("Gagal menyimpan setting.");
+      setMessage("Setting berhasil disimpan.");
       router.refresh();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Gagal menyimpan reminder.");
+      setMessage("Gagal menyimpan setting.");
     } finally {
       setIsSaving(false);
     }
   }
 
   return (
-    <div className="rounded-[1.75rem] bg-white p-6 shadow-card">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <p className="text-sm text-slate-500">Status reminder</p>
-          <h2 className="mt-2 text-2xl font-semibold">{enabled ? "Aktif" : "Nonaktif"}</h2>
+    <div className="space-y-8">
+      <section className="rounded-3xl border border-slate-800 bg-slate-900/40 p-8 backdrop-blur-md glow-card relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+          <span className="font-mono text-4xl uppercase">PENGINGAT</span>
         </div>
-        <button
-          aria-pressed={enabled}
-          className={`rounded-full px-4 py-2 text-sm font-semibold text-white ${enabled ? "bg-moss" : "bg-slate-400"}`}
-          onClick={() => setEnabled((current) => !current)}
-          type="button"
-        >
-          {enabled ? "Matikan" : "Aktifkan"}
-        </button>
-      </div>
-
-      <div className="mt-6 grid gap-4 md:grid-cols-3">
-        <div>
-          <label className="text-sm font-medium text-slate-700" htmlFor="reminder-frequency">
-            Frekuensi
-          </label>
-          <select
-            className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-amber-400 disabled:bg-slate-50"
-            disabled={!enabled}
-            id="reminder-frequency"
-            onChange={(event) => setFrequency(event.target.value as "daily" | "weekly")}
-            value={frequency}
+        
+        <div className="flex items-center justify-between gap-6 mb-10 border-b border-slate-800 pb-8">
+          <div className="space-y-1">
+            <p className="font-mono text-[10px] uppercase tracking-widest text-emerald-500">Otomatisasi</p>
+            <h2 className="text-3xl font-bold tracking-tight">{enabled ? "PENGINGAT AKTIF" : "PENGINGAT MATI"}</h2>
+          </div>
+          <button
+            onClick={() => setEnabled(!enabled)}
+            className={`rounded-xl px-6 py-3 font-bold text-xs tracking-widest transition-all active:scale-95 ${enabled ? 'bg-emerald-500 text-slate-900' : 'bg-slate-800 text-slate-400 border border-slate-700'}`}
           >
-            <option value="daily">Harian</option>
-            <option value="weekly">Mingguan</option>
-          </select>
+            {enabled ? "MATIKAN" : "NYALAKAN"}
+          </button>
         </div>
-        <div>
-          <label className="text-sm font-medium text-slate-700" htmlFor="reminder-time">
-            Jam reminder
-          </label>
-          <input
-            className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-amber-400 disabled:bg-slate-50"
-            disabled={!enabled}
-            id="reminder-time"
-            onChange={(event) => setTime(event.target.value)}
-            type="time"
-            value={time}
-          />
+
+        <div className="grid gap-8 md:grid-cols-3">
+          <div className="space-y-2">
+            <label className="font-mono text-[10px] uppercase tracking-wider text-slate-500">FREKUENSI</label>
+            <select
+              className="w-full bg-slate-950 rounded-xl border border-slate-800 px-4 py-3 text-slate-200 outline-none focus:border-emerald-500/50 transition-all appearance-none disabled:opacity-30"
+              disabled={!enabled}
+              onChange={(e) => setFrequency(e.target.value as any)}
+              value={frequency}
+            >
+              <option value="daily">HARIAN</option>
+              <option value="weekly">MINGGUAN</option>
+            </select>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="font-mono text-[10px] uppercase tracking-wider text-slate-500">WAKTU PENGINGAT</label>
+            <input
+              className="w-full bg-slate-950 rounded-xl border border-slate-800 px-4 py-3 text-slate-200 outline-none focus:border-emerald-500/50 transition-all disabled:opacity-30"
+              disabled={!enabled}
+              onChange={(e) => setTime(e.target.value)}
+              type="time"
+              value={time}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="font-mono text-[10px] uppercase tracking-wider text-slate-500">HARI</label>
+            <select
+              className="w-full bg-slate-950 rounded-xl border border-slate-800 px-4 py-3 text-slate-200 outline-none focus:border-emerald-500/50 transition-all appearance-none disabled:opacity-10"
+              disabled={!enabled || frequency !== "weekly"}
+              onChange={(e) => setWeekday(Number(e.target.value))}
+              value={weekday}
+            >
+              {weekdayOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label.toUpperCase()}</option>
+              ))}
+            </select>
+          </div>
         </div>
-        <div>
-          <label className="text-sm font-medium text-slate-700" htmlFor="reminder-weekday">
-            Hari mingguan
-          </label>
-          <select
-            className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-amber-400 disabled:bg-slate-50"
-            disabled={!enabled || frequency !== "weekly"}
-            id="reminder-weekday"
-            onChange={(event) => setWeekday(Number(event.target.value))}
-            value={weekday}
+
+        <div className="mt-10 p-5 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 border-dashed">
+          <p className="font-mono text-[10px] text-emerald-500/60 leading-relaxed uppercase tracking-tighter">
+            Catatan: Pengingat dikirim melalui WhatsApp sesuai dengan jadwal yang Anda tentukan di halaman ini.
+          </p>
+        </div>
+
+        <div className="mt-10 flex items-center gap-6">
+          <button
+            className="rounded-xl bg-emerald-500 px-8 py-4 font-bold text-slate-950 hover:bg-emerald-400 transition-all active:scale-95 disabled:opacity-50"
+            disabled={isSaving}
+            onClick={handleSave}
           >
-            {weekdayOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            {isSaving ? "MENYIMPAN..." : "SIMPAN SETTING"}
+          </button>
+          {message && <p className="font-mono text-[10px] text-emerald-400 uppercase tracking-widest">{message}</p>}
         </div>
-      </div>
-
-      <p className="mt-6 rounded-2xl bg-sand p-4 text-sm text-slate-700">
-        Scheduler global InsForge sudah aktif. Halaman ini mengubah preferensi reminder di profile Anda.
-      </p>
-
-      <div className="mt-6 flex items-center gap-3">
-        <button
-          className="rounded-full bg-moss px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={isSaving}
-          onClick={handleSave}
-          type="button"
-        >
-          {isSaving ? "Menyimpan..." : "Simpan reminder"}
-        </button>
-        {message ? <p className="text-sm text-slate-600">{message}</p> : null}
-      </div>
+      </section>
     </div>
   );
 }

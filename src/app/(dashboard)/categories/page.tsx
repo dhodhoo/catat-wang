@@ -10,7 +10,7 @@ export default async function CategoriesPage() {
   const categories = await listCategories(accessToken, user.id);
 
   return (
-    <DashboardShell title="Kategori fleksibel" subtitle="Kelola kategori default dan custom untuk pemasukan maupun pengeluaran.">
+    <DashboardShell title="Manajemen Kategori" subtitle="Kelola kategori default dan custom untuk pemasukan maupun pengeluaran.">
       <CategoriesManager initialCategories={categories as any[]} />
     </DashboardShell>
   );

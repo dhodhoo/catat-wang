@@ -27,17 +27,15 @@ export function AuthFormCard({
     const payload = Object.fromEntries(formData.entries());
     const response = await fetch(endpoint, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
 
     const data = await response.json();
     if (!response.ok) {
-      setError(data.message ?? "Permintaan gagal.");
+      setError(data.message ?? "Authentication failed.");
     } else {
-      setMessage(data.status ? `Status: ${data.status}` : "Berhasil.");
+      setMessage(data.status ? `Status: ${data.status}` : "Success.");
       if (data.status === "ok" || data.status === "signed_in" || data.status === "verified") {
         window.location.href = "/dashboard";
       }
@@ -45,27 +43,35 @@ export function AuthFormCard({
         window.location.href = `/verify-email?email=${encodeURIComponent(String(payload.email ?? ""))}`;
       }
     }
-
     setIsLoading(false);
   }
 
   return (
-    <div className="w-full max-w-md rounded-[2rem] bg-white p-8 shadow-card">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold">{title}</h1>
-        <p className="mt-2 text-sm text-slate-500">{subtitle}</p>
+    <div className="w-full max-w-md rounded-[2.5rem] border border-slate-800 bg-slate-900/40 p-10 backdrop-blur-2xl shadow-2xl glow-card relative overflow-hidden">
+      <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+        <span className="font-mono text-4xl">SECURE</span>
       </div>
+      
+      <div className="mb-10 space-y-2">
+        <div className="flex items-center gap-2 mb-4">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
+          <p className="font-mono text-[10px] uppercase tracking-widest text-emerald-500/80">Access Protocol</p>
+        </div>
+        <h1 className="text-3xl font-bold tracking-tight text-white">{title}</h1>
+        <p className="text-sm text-slate-400 font-medium leading-relaxed">{subtitle}</p>
+      </div>
+
       <form
-        className="space-y-4"
+        className="space-y-6"
         action={async (formData) => {
           await handleSubmit(formData);
         }}
       >
         {fields.map((field) => (
           <label key={field.name} className="block space-y-2">
-            <span className="text-sm font-medium text-slate-700">{field.label}</span>
+            <span className="font-mono text-[10px] uppercase tracking-wider text-slate-500">{field.label}</span>
             <input
-              className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-coral"
+              className="w-full bg-slate-950 rounded-xl border border-slate-800 px-4 py-3 text-slate-200 outline-none focus:border-emerald-500/50 transition-all placeholder:text-slate-700"
               name={field.name}
               placeholder={field.placeholder}
               required
@@ -73,15 +79,17 @@ export function AuthFormCard({
             />
           </label>
         ))}
+        
         <button
-          className="w-full rounded-2xl bg-coral px-4 py-3 font-semibold text-white"
+          className="w-full rounded-xl bg-emerald-500 py-4 font-bold text-slate-950 hover:bg-emerald-400 transition-all active:scale-95 disabled:opacity-50 shadow-[0_0_20px_rgba(16,185,129,0.1)]"
           disabled={isLoading}
           type="submit"
         >
-          {isLoading ? "Memproses..." : submitLabel}
+          {isLoading ? "EXECUTING..." : submitLabel.toUpperCase()}
         </button>
-        {message ? <p className="text-sm text-moss">{message}</p> : null}
-        {error ? <p className="text-sm text-red-600">{error}</p> : null}
+
+        {message && <p className="text-xs font-mono text-emerald-500 uppercase tracking-tight text-center">{message}</p>}
+        {error && <p className="text-xs font-mono text-rose-500 uppercase tracking-tight text-center">{error}</p>}
       </form>
     </div>
   );

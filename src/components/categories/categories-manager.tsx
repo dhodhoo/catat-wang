@@ -24,31 +24,20 @@ export function CategoriesManager({ initialCategories }: { initialCategories: Ca
   const activeCategories = categories.filter((category) => !category.is_archived);
 
   async function handleCreate() {
-    if (!name.trim()) {
-      setMessage("Nama kategori wajib diisi.");
-      return;
-    }
-
+    if (!name.trim()) return;
     try {
       setIsSaving(true);
       setMessage(null);
       const response = await fetch("/api/categories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim(),
-          type
-        })
+        body: JSON.stringify({ name: name.trim(), type })
       });
       const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.message ?? "Gagal membuat kategori.");
-      }
-
+      if (!response.ok) throw new Error(payload.message ?? "Gagal membuat kategori.");
       setCategories((current) => [payload.data, ...current]);
       setName("");
       setType("expense");
-      setMessage("Kategori berhasil ditambahkan.");
       router.refresh();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Gagal membuat kategori.");
@@ -58,30 +47,19 @@ export function CategoriesManager({ initialCategories }: { initialCategories: Ca
   }
 
   async function handleUpdate(id: string) {
-    if (!editingName.trim()) {
-      setMessage("Nama kategori tidak boleh kosong.");
-      return;
-    }
-
+    if (!editingName.trim()) return;
     try {
       setIsSaving(true);
-      setMessage(null);
       const response = await fetch(`/api/categories/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: editingName.trim()
-        })
+        body: JSON.stringify({ name: editingName.trim() })
       });
       const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.message ?? "Gagal mengubah kategori.");
-      }
-
-      setCategories((current) => current.map((category) => (category.id === id ? payload.data : category)));
+      if (!response.ok) throw new Error(payload.message ?? "Gagal mengubah kategori.");
+      setCategories((current) => current.map((cat) => (cat.id === id ? payload.data : cat)));
       setEditingId(null);
       setEditingName("");
-      setMessage("Kategori berhasil diubah.");
       router.refresh();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Gagal mengubah kategori.");
@@ -91,23 +69,17 @@ export function CategoriesManager({ initialCategories }: { initialCategories: Ca
   }
 
   async function handleArchive(category: CategoryItem) {
+    if (!window.confirm(`Hapus kategori "${category.name}"?`)) return;
     try {
       setIsSaving(true);
-      setMessage(null);
       const response = await fetch(`/api/categories/${category.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          isArchived: true
-        })
+        body: JSON.stringify({ isArchived: true })
       });
       const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.message ?? "Gagal menghapus kategori.");
-      }
-
+      if (!response.ok) throw new Error(payload.message ?? "Gagal menghapus kategori.");
       setCategories((current) => current.map((item) => (item.id === category.id ? payload.data : item)));
-      setMessage(`Kategori ${category.name} dihapus dari daftar aktif.`);
       router.refresh();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Gagal menghapus kategori.");
@@ -117,120 +89,111 @@ export function CategoriesManager({ initialCategories }: { initialCategories: Ca
   }
 
   return (
-    <div className="space-y-6">
-      <section className="rounded-[1.75rem] bg-white p-6 shadow-card">
-        <div className="flex flex-col gap-4 md:flex-row md:items-end">
-          <div className="flex-1">
-            <label className="text-sm font-medium text-slate-700" htmlFor="new-category-name">
-              Nama kategori
-            </label>
+    <div className="space-y-12">
+      <section className="rounded-3xl border border-slate-800 bg-slate-900/40 p-8 backdrop-blur-md glow-card relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+          <span className="font-mono text-4xl uppercase">KATEGORI</span>
+        </div>
+        <div className="mb-8">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-emerald-500">Master Data</p>
+          <h2 className="text-2xl font-bold tracking-tight">Kategori Baru</h2>
+        </div>
+        
+        <div className="flex flex-col gap-6 md:flex-row md:items-end">
+          <div className="flex-1 space-y-2">
+            <label className="font-mono text-[10px] uppercase tracking-wider text-slate-500" htmlFor="node-name">NAMA KATEGORI</label>
             <input
-              className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none ring-0 placeholder:text-slate-400 focus:border-amber-400"
-              id="new-category-name"
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Contoh: Ngopi"
+              className="w-full bg-slate-950 rounded-xl border border-slate-800 px-4 py-3 text-slate-200 outline-none focus:border-emerald-500/50 transition-all placeholder:text-slate-700"
+              id="node-name"
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Contoh: Jajan Bakso"
               value={name}
             />
           </div>
-          <div className="w-full md:w-48">
-            <label className="text-sm font-medium text-slate-700" htmlFor="new-category-type">
-              Tipe
-            </label>
+          <div className="w-full md:w-56 space-y-2">
+            <label className="font-mono text-[10px] uppercase tracking-wider text-slate-500" htmlFor="node-type">TIPE</label>
             <select
-              className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-amber-400"
-              id="new-category-type"
-              onChange={(event) => setType(event.target.value as "income" | "expense")}
+              className="w-full bg-slate-950 rounded-xl border border-slate-800 px-4 py-3 text-slate-200 outline-none focus:border-emerald-500/50 transition-all appearance-none"
+              id="node-type"
+              onChange={(e) => setType(e.target.value as any)}
               value={type}
             >
-              <option value="expense">Pengeluaran</option>
-              <option value="income">Pemasukan</option>
+              <option value="expense">PENGELUARAN</option>
+              <option value="income">PEMASUKAN</option>
             </select>
           </div>
           <button
-            className="rounded-full bg-moss px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={isSaving}
+            className="rounded-xl bg-emerald-500 px-8 py-3.5 font-bold text-slate-950 hover:bg-emerald-400 transition-all active:scale-95 disabled:opacity-50 h-[52px]"
+            disabled={isSaving || !name.trim()}
             onClick={handleCreate}
-            type="button"
           >
-            Tambah kategori
+            TAMBAH
           </button>
         </div>
-        {message ? <p className="mt-4 text-sm text-slate-600">{message}</p> : null}
+        {message && <p className="mt-4 font-mono text-[10px] text-rose-500 uppercase tracking-tight">{message}</p>}
       </section>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {activeCategories.map((category) => {
           const isEditing = editingId === category.id;
-
           return (
-            <article key={category.id} className="rounded-[1.75rem] bg-white p-5 shadow-card">
-              <div className="flex items-start justify-between gap-4">
+            <article key={category.id} className="group relative rounded-3xl border border-slate-800 bg-slate-900/40 p-6 backdrop-blur-sm transition-all hover:bg-slate-900/60 glow-card">
+              <div className="flex items-start justify-between mb-6">
                 <div className="min-w-0 flex-1">
                   {isEditing ? (
                     <input
                       autoFocus
-                      className="w-full rounded-2xl border border-slate-200 px-4 py-2 text-sm outline-none focus:border-amber-400"
-                      onChange={(event) => setEditingName(event.target.value)}
+                      className="w-full bg-slate-950 rounded-lg border border-emerald-500/50 px-3 py-1.5 text-sm outline-none font-bold text-white transition-all"
+                      onChange={(e) => setEditingName(e.target.value)}
                       value={editingName}
                     />
                   ) : (
-                    <p className="text-lg font-semibold">{category.name}</p>
+                    <h3 className="text-xl font-bold tracking-tight text-white group-hover:text-emerald-400 transition-colors uppercase">{category.name}</h3>
                   )}
-                  <p className="mt-1 text-sm text-slate-500">{category.type === "income" ? "Pemasukan" : "Pengeluaran"}</p>
+                  <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-slate-500">
+                    {category.type === "income" ? "PEMASUKAN" : "PENGELUARAN"}
+                  </p>
                 </div>
-                <span className="rounded-full bg-sand px-3 py-1 text-xs font-semibold text-moss">
-                  {category.is_default ? "Default" : "Custom"}
+                <span className={`rounded-lg px-2 py-1 text-[8px] font-mono tracking-widest uppercase ${category.is_default ? 'bg-slate-800 text-slate-400' : 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'}`}>
+                  {category.is_default ? "DEFAULT" : "CUSTOM"}
                 </span>
               </div>
-              <div className="mt-5 flex flex-wrap gap-2">
+              
+              <div className="flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
                 {isEditing ? (
                   <>
                     <button
-                      className="rounded-full bg-moss px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-                      disabled={isSaving}
+                      className="text-[10px] font-mono border border-emerald-900 bg-emerald-950/30 text-emerald-400 hover:bg-emerald-900/50 px-3 py-1.5 rounded-lg transition-all"
                       onClick={() => handleUpdate(category.id)}
-                      type="button"
                     >
-                      Simpan
+                      SIMPAN
                     </button>
                     <button
-                      className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700"
-                      onClick={() => {
-                        setEditingId(null);
-                        setEditingName("");
-                      }}
-                      type="button"
+                      className="text-[10px] font-mono border border-slate-700 text-slate-400 hover:bg-slate-800 px-3 py-1.5 rounded-lg transition-all"
+                      onClick={() => setEditingId(null)}
                     >
-                      Batal
+                      BATAL
                     </button>
                   </>
                 ) : (
                   <>
                     <button
-                      className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
-                      disabled={isSaving}
-                      onClick={() => {
-                        setEditingId(category.id);
-                        setEditingName(category.name);
-                      }}
-                      type="button"
+                      className="text-[10px] font-mono border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-all"
+                      onClick={() => { setEditingId(category.id); setEditingName(category.name); }}
                     >
-                      Edit
+                      EDIT
                     </button>
-                    <button
-                      className="rounded-full border border-coral/30 bg-coral/5 px-4 py-2 text-sm font-medium text-coral disabled:cursor-not-allowed disabled:opacity-50"
-                      disabled={isSaving || category.is_default}
-                      onClick={() => handleArchive(category)}
-                      type="button"
-                    >
-                      Hapus
-                    </button>
+                    {!category.is_default && (
+                      <button
+                        className="text-[10px] font-mono border border-rose-900 bg-rose-950/30 text-rose-400 hover:bg-rose-900/50 px-3 py-1.5 rounded-lg transition-all"
+                        onClick={() => handleArchive(category)}
+                      >
+                        HAPUS
+                      </button>
+                    )}
                   </>
                 )}
               </div>
-              {category.is_default ? (
-                <p className="mt-3 text-xs text-slate-500">Kategori default tidak bisa dihapus.</p>
-              ) : null}
             </article>
           );
         })}

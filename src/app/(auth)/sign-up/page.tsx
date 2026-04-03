@@ -3,22 +3,28 @@ import { AuthFormCard } from "@/components/auth/auth-form-card";
 
 export default function SignUpPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-paper px-6 py-12">
-      <div className="space-y-6">
+    <main className="relative flex min-h-screen items-center justify-center bg-slate-950 px-6 py-12 overflow-hidden">
+      {/* Background Architectural Patterns */}
+      <div className="absolute inset-0 dashboard-grid opacity-20 pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-emerald-500/5 blur-[120px] pointer-events-none" />
+
+      <div className="relative z-10 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
         <AuthFormCard
-          title="Buat akun CatatWang"
-          subtitle="Daftar dengan email, lalu hubungkan WhatsApp Anda."
+          title="Daftar"
+          subtitle="Buat akun baru untuk mulai mencatat."
           endpoint="/api/auth/sign-up"
           submitLabel="Daftar"
           fields={[
-            { name: "fullName", label: "Nama lengkap", placeholder: "Nama Anda" },
-            { name: "email", label: "Email", type: "email", placeholder: "nama@email.com" },
-            { name: "password", label: "Password", type: "password", placeholder: "Minimal 6 karakter" }
+            { name: "fullName", label: "Nama Lengkap", placeholder: "Nama Anda" },
+            { name: "email", label: "Email", type: "email", placeholder: "pilot@catatwang.app" },
+            { name: "password", label: "Password", type: "password", placeholder: "••••••••" }
           ]}
         />
-        <p className="text-center text-sm text-slate-500">
-          Sudah punya akun? <Link href="/sign-in">Login</Link>
-        </p>
+        <div className="text-center">
+          <Link href="/sign-in" className="font-mono text-[10px] uppercase tracking-widest text-slate-500 hover:text-emerald-500 transition-colors">
+            Sudah punya akun? Login
+          </Link>
+        </div>
       </div>
     </main>
   );
