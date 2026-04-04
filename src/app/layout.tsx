@@ -20,7 +20,12 @@ const monoFont = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: "CatatWang",
-  description: "Personal finance tracker via WhatsApp for Indonesia."
+  description: "Personal finance tracker via WhatsApp for Indonesia.",
+  icons: {
+    icon: "/catatwang-icon.jpeg",
+    shortcut: "/catatwang-icon.jpeg",
+    apple: "/catatwang-icon.jpeg"
+  }
 };
 
 export default function RootLayout({
