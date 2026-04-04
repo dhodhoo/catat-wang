@@ -49,3 +49,6 @@ test-*.ts
 test-*.js
 tmp-*
 *-utf8.*
+tmp/
+testsprite_tests/
+*.tsbuildinfo
