@@ -6,6 +6,7 @@ import {
   startWahaSession,
   stopWahaSession
 } from "@/lib/whatsapp/client";
+import { WahaAdminAccessError, requireWahaInternalAdminEmail } from "@/lib/whatsapp/admin";
 import { env } from "@/lib/utils/env";
 import { fail, ok } from "@/lib/utils/http";
 
@@ -77,7 +78,8 @@ async function waitForSessionSnapshot() {
 
 export async function GET() {
   try {
-    await requireCurrentUserApi();
+    const user = await requireCurrentUserApi();
+    requireWahaInternalAdminEmail(user.email);
     const { session, qr } = await waitForSessionSnapshot();
 
     return ok({
@@ -94,13 +96,17 @@ export async function GET() {
       qr
     });
   } catch (error) {
+    if (error instanceof WahaAdminAccessError) {
+      return fail(error.message, 403, "forbidden");
+    }
     return fail(error instanceof Error ? error.message : "Gagal mengambil status WAHA.");
   }
 }
 
 export async function POST(request: Request) {
   try {
-    await requireCurrentUserApi();
+    const user = await requireCurrentUserApi();
+    requireWahaInternalAdminEmail(user.email);
     const body = (await request.json().catch(() => ({}))) as { action?: string };
     const action = body.action ?? "ensure";
 
@@ -121,6 +127,9 @@ export async function POST(request: Request) {
       qr
     });
   } catch (error) {
+    if (error instanceof WahaAdminAccessError) {
+      return fail(error.message, 403, "forbidden");
+    }
     return fail(error instanceof Error ? error.message : "Gagal menyiapkan session WAHA.");
   }
 }

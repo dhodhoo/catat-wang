@@ -5,10 +5,12 @@ import { KeyRound, Phone, Send } from "lucide-react";
 
 export function WhatsAppLinkCard({
   defaultPhone = "",
-  botNumber
+  botNumber,
+  canManageWaha = false
 }: {
   defaultPhone?: string;
   botNumber?: string | null;
+  canManageWaha?: boolean;
 }) {
   const [phone, setPhone] = useState(defaultPhone);
   const [isLoading, setIsLoading] = useState(false);
@@ -46,8 +48,9 @@ export function WhatsAppLinkCard({
           <p className="eyebrow">Verifikasi nomor</p>
           <h2 className="mt-3 text-3xl text-ink">Hubungkan nomor pribadi Anda ke workspace ini.</h2>
           <p className="mt-3 max-w-xl text-sm leading-7 text-slate-600 sm:text-base">
-            Setelah sesi WhatsApp aktif, masukkan nomor Anda untuk mendapatkan kode verifikasi yang akan
-            menghubungkan chat dengan akun CatatWang.
+            {canManageWaha
+              ? "Setelah sesi WhatsApp aktif, masukkan nomor Anda untuk mendapatkan kode verifikasi yang akan menghubungkan chat dengan akun CatatWang."
+              : "Masukkan nomor Anda untuk mendapatkan kode verifikasi, lalu kirim kode itu ke bot WhatsApp yang dibagikan admin workspace."}
           </p>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -55,8 +58,8 @@ export function WhatsAppLinkCard({
               <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-moss shadow-sm">
                 <Phone className="h-5 w-5" />
               </span>
-              <p className="mt-5 text-sm text-slate-500">Nomor bot aktif</p>
-              <p className="mt-2 text-xl text-ink">{botNumber ?? "Belum terdeteksi"}</p>
+              <p className="mt-5 text-sm text-slate-500">{canManageWaha ? "Nomor bot aktif" : "Akses bot"}</p>
+              <p className="mt-2 text-xl text-ink">{canManageWaha ? botNumber ?? "Belum terdeteksi" : "Dibagikan oleh admin"}</p>
             </article>
 
             <article className="surface-muted p-4">
@@ -64,7 +67,9 @@ export function WhatsAppLinkCard({
                 <Send className="h-5 w-5" />
               </span>
               <p className="mt-5 text-sm text-slate-500">Langkah berikutnya</p>
-              <p className="mt-2 text-xl text-ink">Kirim kode ke bot setelah kode diterima.</p>
+              <p className="mt-2 text-xl text-ink">
+                {canManageWaha ? "Kirim kode ke bot setelah kode diterima." : "Minta nomor bot ke admin lalu kirim kode verifikasi."}
+              </p>
             </article>
           </div>
         </div>

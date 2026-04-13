@@ -10,6 +10,7 @@ const envSchema = z.object({
   WAHA_SESSION_NAME: z.string().min(1).default("default"),
   WAHA_WEBHOOK_URL: z.string().url().optional(),
   WAHA_WEBHOOK_SECRET: z.string().min(1).optional(),
+  WAHA_INTERNAL_ADMIN_EMAILS: z.string().default(""),
   RECEIPT_AI_MODEL: z.string().default("openai/gpt-4o-mini"),
   REMINDER_WEBHOOK_SECRET: z.string().min(1).optional()
 });
@@ -25,6 +26,7 @@ export const env = envSchema.parse({
   WAHA_SESSION_NAME: process.env.WAHA_SESSION_NAME,
   WAHA_WEBHOOK_URL: process.env.WAHA_WEBHOOK_URL,
   WAHA_WEBHOOK_SECRET: process.env.WAHA_WEBHOOK_SECRET,
+  WAHA_INTERNAL_ADMIN_EMAILS: process.env.WAHA_INTERNAL_ADMIN_EMAILS,
   RECEIPT_AI_MODEL: process.env.RECEIPT_AI_MODEL,
   REMINDER_WEBHOOK_SECRET: process.env.REMINDER_WEBHOOK_SECRET
 });

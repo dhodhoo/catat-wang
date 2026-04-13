@@ -5,10 +5,12 @@ import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { requireCurrentUser } from "@/lib/insforge/auth";
 import { getAccessTokenFromCookies } from "@/lib/insforge/cookies";
 import { createInsforgeServerClient } from "@/lib/insforge/server";
+import { isWahaInternalAdminEmail } from "@/lib/whatsapp/admin";
 import { fromWahaChatId, getWahaSession } from "@/lib/whatsapp/client";
 
 export default async function WhatsAppSettingsPage() {
   const user = await requireCurrentUser();
+  const canManageWaha = isWahaInternalAdminEmail(user.email);
   const accessToken = (await getAccessTokenFromCookies()) ?? "";
   const client = createInsforgeServerClient(accessToken);
   const { data } = await client.database
@@ -26,7 +28,7 @@ export default async function WhatsAppSettingsPage() {
     .limit(1)
     .maybeSingle();
 
-  const session = await getWahaSession().catch(() => null);
+  const session = canManageWaha ? await getWahaSession().catch(() => null) : null;
   const botNumber = session?.me?.id ? fromWahaChatId(session.me.id) : null;
   const displayUserPhone = latestLink?.phone_e164 ?? data?.whatsapp_phone_e164 ?? "Belum terhubung";
 
@@ -69,8 +71,8 @@ export default async function WhatsAppSettingsPage() {
           </article>
         </section>
 
-        <WahaSessionCard />
-        <WhatsAppLinkCard defaultPhone={data?.whatsapp_phone_e164 ?? ""} botNumber={botNumber} />
+        {canManageWaha ? <WahaSessionCard /> : null}
+        <WhatsAppLinkCard defaultPhone={data?.whatsapp_phone_e164 ?? ""} botNumber={botNumber} canManageWaha={canManageWaha} />
       </div>
     </DashboardShell>
   );
