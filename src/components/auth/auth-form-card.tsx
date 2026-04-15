@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 export function AuthFormCard({
   title,
@@ -18,32 +18,42 @@ export function AuthFormCard({
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const submitLockRef = useRef(false);
 
   async function handleSubmit(formData: FormData) {
+    if (submitLockRef.current) {
+      return;
+    }
+
+    submitLockRef.current = true;
     setError(null);
     setMessage(null);
     setIsLoading(true);
 
-    const payload = Object.fromEntries(formData.entries());
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
+    try {
+      const payload = Object.fromEntries(formData.entries());
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
 
-    const data = await response.json();
-    if (!response.ok) {
-      setError(data.message ?? "Authentication failed.");
-    } else {
-      setMessage(data.status ? `Status: ${data.status}` : "Success.");
-      if (data.status === "ok" || data.status === "signed_in" || data.status === "verified") {
-        window.location.href = "/dashboard";
+      const data = await response.json();
+      if (!response.ok) {
+        setError(data.message ?? "Authentication failed.");
+      } else {
+        setMessage(data.status ? `Status: ${data.status}` : "Success.");
+        if (data.status === "ok" || data.status === "signed_in" || data.status === "verified") {
+          window.location.href = "/dashboard";
+        }
+        if (data.status === "verification_required") {
+          window.location.href = `/verify-email?email=${encodeURIComponent(String(payload.email ?? ""))}`;
+        }
       }
-      if (data.status === "verification_required") {
-        window.location.href = `/verify-email?email=${encodeURIComponent(String(payload.email ?? ""))}`;
-      }
+    } finally {
+      submitLockRef.current = false;
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }
 
   return (
@@ -62,8 +72,12 @@ export function AuthFormCard({
 
       <form
         className="space-y-5"
-        action={async (formData) => {
-          await handleSubmit(formData);
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (isLoading) {
+            return;
+          }
+          void handleSubmit(new FormData(event.currentTarget));
         }}
       >
         {fields.map((field) => (
@@ -72,6 +86,7 @@ export function AuthFormCard({
             <input
               autoComplete={field.type === "password" ? "current-password" : field.name}
               className="field-input"
+              disabled={isLoading}
               name={field.name}
               placeholder={field.placeholder}
               required

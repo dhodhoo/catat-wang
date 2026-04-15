@@ -3,6 +3,10 @@
 import { useState } from "react";
 import { KeyRound, Phone, Send } from "lucide-react";
 
+function toWaMeNumber(phone?: string | null) {
+  return (phone ?? "").replace(/[^\d]/g, "");
+}
+
 export function WhatsAppLinkCard({
   defaultPhone = "",
   botNumber,
@@ -20,6 +24,10 @@ export function WhatsAppLinkCard({
     expiresAt: string;
     instructions: string;
   } | null>(null);
+  const botNumberDigits = toWaMeNumber(botNumber);
+  const autoSendLink = result?.linkCode && botNumberDigits
+    ? `https://wa.me/${botNumberDigits}?text=${encodeURIComponent(result.linkCode)}`
+    : null;
 
   async function generateCode() {
     setIsLoading(true);
@@ -59,7 +67,9 @@ export function WhatsAppLinkCard({
                 <Phone className="h-5 w-5" />
               </span>
               <p className="mt-5 text-sm text-slate-500">{canManageWaha ? "Nomor bot aktif" : "Akses bot"}</p>
-              <p className="mt-2 text-xl text-ink">{canManageWaha ? botNumber ?? "Belum terdeteksi" : "Dibagikan oleh admin"}</p>
+              <p className="mt-2 text-xl text-ink">
+                {botNumber ? botNumber : canManageWaha ? "Belum terdeteksi" : "Belum tersedia"}
+              </p>
             </article>
 
             <article className="surface-muted p-4">
@@ -68,7 +78,7 @@ export function WhatsAppLinkCard({
               </span>
               <p className="mt-5 text-sm text-slate-500">Langkah berikutnya</p>
               <p className="mt-2 text-xl text-ink">
-                {canManageWaha ? "Kirim kode ke bot setelah kode diterima." : "Minta nomor bot ke admin lalu kirim kode verifikasi."}
+                {botNumber ? "Klik tombol kirim otomatis setelah kode muncul." : "Nomor bot belum tersedia, hubungi admin workspace."}
               </p>
             </article>
           </div>
@@ -114,6 +124,23 @@ export function WhatsAppLinkCard({
 
               <div className="mt-5 rounded-[1.25rem] bg-[#fffaf1] px-4 py-3 text-sm leading-6 text-slate-600">
                 {result.instructions}
+              </div>
+
+              <div className="mt-5 flex flex-wrap gap-3">
+                {autoSendLink ? (
+                  <a
+                    className="button-primary justify-center"
+                    href={autoSendLink}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    Kirim LINK ke WhatsApp bot
+                  </a>
+                ) : (
+                  <p className="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                    Nomor bot belum tersedia, jadi kode masih perlu dikirim manual.
+                  </p>
+                )}
               </div>
             </div>
           )}

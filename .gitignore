@@ -49,3 +49,5 @@ test-*.ts
 test-*.js
 tmp-*
 *-utf8.*
+.env*.local
+*.md

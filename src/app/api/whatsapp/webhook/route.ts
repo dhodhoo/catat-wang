@@ -6,7 +6,9 @@ import { createTransaction, deleteLastTransaction, updateLastTransaction } from 
 import { fail, ok } from "@/lib/utils/http";
 
 import {
+  getPhoneLookupVariants,
   normalizePhone,
+  resolveWahaPhone,
   sendWhatsAppTextMessage,
   verifyWhatsAppSignature
 } from "@/lib/whatsapp/client";
@@ -22,10 +24,11 @@ import { computeDedupeHash, normalizeWhatsappPayload } from "@/lib/whatsapp/webh
 
 async function findUserByPhone(phone: string) {
   const admin = createInsforgeAdminClient();
+  const variants = getPhoneLookupVariants(phone);
   const { data, error } = await admin.database
     .from("profiles")
     .select("*")
-    .eq("whatsapp_phone_e164", normalizePhone(phone))
+    .in("whatsapp_phone_e164", variants)
     .maybeSingle();
 
   if (error) {
@@ -67,7 +70,7 @@ async function handleLinkCode(messageText: string, waFrom: string, replyToChatId
   await admin.database
     .from("profiles")
     .update({
-      whatsapp_phone_e164: data.phone_e164,
+      whatsapp_phone_e164: normalizePhone(data.phone_e164),
       whatsapp_phone_verified_at: new Date().toISOString()
     })
     .eq("id", data.user_id);
@@ -121,6 +124,8 @@ export async function POST(request: Request) {
   const admin = createInsforgeAdminClient();
 
   for (const message of messages) {
+    const senderPhone = await resolveWahaPhone(message.replyToChatId || message.from);
+
     const existing = await admin.database
       .from("message_logs")
       .select("id")
@@ -131,12 +136,12 @@ export async function POST(request: Request) {
       continue;
     }
 
-    const isLinked = message.text ? await handleLinkCode(message.text, message.from, message.replyToChatId) : false;
+    const isLinked = message.text ? await handleLinkCode(message.text, senderPhone, message.replyToChatId) : false;
     if (isLinked) {
       await persistMessageLog({
         whatsapp_message_id: message.messageId,
         user_id: null,
-        wa_from: normalizePhone(message.from),
+        wa_from: senderPhone,
         wa_type: "command",
         raw_text: message.text,
         media_id: null,
@@ -144,7 +149,7 @@ export async function POST(request: Request) {
         media_sha256: null,
         intent: "link_account",
         parsed_payload: { code: message.text },
-        dedupe_hash: computeDedupeHash({ from: message.from, text: message.text }),
+        dedupe_hash: computeDedupeHash({ from: senderPhone, text: message.text }),
         processing_status: "processed",
         transaction_id: null,
         provider_payload: message.providerPayload,
@@ -153,13 +158,13 @@ export async function POST(request: Request) {
       continue;
     }
 
-    const profile = await findUserByPhone(message.from);
+    const profile = await findUserByPhone(senderPhone);
     if (!profile) {
       await sendWhatsAppTextMessage(message.replyToChatId, buildLinkInstructionMessage()).catch(() => null);
       await persistMessageLog({
         whatsapp_message_id: message.messageId,
         user_id: null,
-        wa_from: normalizePhone(message.from),
+        wa_from: senderPhone,
         wa_type: message.type,
         raw_text: message.text,
         media_id: message.image?.id ?? null,
@@ -167,7 +172,7 @@ export async function POST(request: Request) {
         media_sha256: message.image?.sha256 ?? null,
         intent: "unknown",
         parsed_payload: null,
-        dedupe_hash: computeDedupeHash({ from: message.from, text: message.text, mediaId: message.image?.id }),
+        dedupe_hash: computeDedupeHash({ from: senderPhone, text: message.text, mediaId: message.image?.id }),
         processing_status: "failed",
         transaction_id: null,
         provider_payload: message.providerPayload,
@@ -181,7 +186,7 @@ export async function POST(request: Request) {
       const messageLog = await persistMessageLog({
         whatsapp_message_id: message.messageId,
         user_id: profile.id,
-        wa_from: normalizePhone(message.from),
+        wa_from: senderPhone,
         wa_type: message.type,
         raw_text: message.text,
         media_id: null,
@@ -189,7 +194,7 @@ export async function POST(request: Request) {
         media_sha256: null,
         intent: parsed.intent,
         parsed_payload: parsed,
-        dedupe_hash: computeDedupeHash({ from: message.from, text: message.text }),
+        dedupe_hash: computeDedupeHash({ from: senderPhone, text: message.text }),
         processing_status: parsed.intent === "unknown" ? "needs_input" : "received",
         transaction_id: null,
         provider_payload: message.providerPayload,

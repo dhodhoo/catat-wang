@@ -50,7 +50,50 @@ function buildWahaUrl(path: string) {
 
 export function normalizePhone(raw: string) {
   const digits = raw.replace(/[^\d]/g, "");
-  return digits.startsWith("62") ? `+${digits}` : `+${digits}`;
+
+  if (!digits) {
+    return "";
+  }
+
+  if (digits.startsWith("62")) {
+    return `+${digits}`;
+  }
+
+  if (digits.startsWith("0")) {
+    return `+62${digits.slice(1)}`;
+  }
+
+  if (digits.startsWith("8")) {
+    return `+62${digits}`;
+  }
+
+  return `+${digits}`;
+}
+
+export function getPhoneLookupVariants(raw: string) {
+  const original = raw.trim();
+  const normalized = normalizePhone(raw);
+  const normalizedDigits = normalized.replace(/[^\d]/g, "");
+  const variants = new Set<string>();
+
+  if (original) {
+    variants.add(original);
+  }
+
+  if (normalized) {
+    variants.add(normalized);
+  }
+
+  if (normalizedDigits) {
+    variants.add(normalizedDigits);
+  }
+
+  if (normalizedDigits.startsWith("62")) {
+    variants.add(`0${normalizedDigits.slice(2)}`);
+    variants.add(normalizedDigits.slice(2));
+  }
+
+  return Array.from(variants);
 }
 
 export function toWahaChatId(phone: string) {
@@ -59,6 +102,49 @@ export function toWahaChatId(phone: string) {
 
 export function fromWahaChatId(chatId: string) {
   return normalizePhone(chatId.replace(/@c\.us$/i, ""));
+}
+
+interface WahaContactResponse {
+  id?: string;
+  number?: string;
+}
+
+function isWahaLid(chatId: string) {
+  return /@lid$/i.test(chatId);
+}
+
+export async function resolveWahaPhone(chatIdOrPhone: string) {
+  if (!chatIdOrPhone) {
+    return "";
+  }
+
+  if (!isWahaLid(chatIdOrPhone)) {
+    return chatIdOrPhone.includes("@") ? fromWahaChatId(chatIdOrPhone) : normalizePhone(chatIdOrPhone);
+  }
+
+  try {
+    const encodedChatId = encodeURIComponent(chatIdOrPhone);
+    const response = await fetch(buildWahaUrl(`/api/${env.WAHA_SESSION_NAME}/contacts/${encodedChatId}`), {
+      headers: getWahaHeaders(),
+      cache: "no-store"
+    });
+
+    if (!response.ok) {
+      throw new Error(`Gagal resolve kontak WAHA (${response.status}).`);
+    }
+
+    const contact = (await response.json()) as WahaContactResponse;
+    if (contact.number) {
+      return normalizePhone(contact.number);
+    }
+    if (contact.id) {
+      return fromWahaChatId(contact.id);
+    }
+  } catch {
+    // Fallback to a best-effort normalization if contact resolution fails.
+  }
+
+  return normalizePhone(chatIdOrPhone.replace(/@lid$/i, ""));
 }
 
 export function verifyWhatsAppSignature(rawBody: string, signature: string | null) {

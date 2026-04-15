@@ -3,9 +3,36 @@ services:
     image: devlikeapro/waha:latest
     container_name: catatwang-waha
     restart: unless-stopped
-    ports:
-      - "${WAHA_PORT:-3001}:3000"
+    expose:
+      - "3000"
     environment:
       WAHA_API_KEY: ${WAHA_API_KEY}
     volumes:
       - ./sessions:/app/.sessions
+    networks:
+      - waha
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: catatwang-waha-proxy
+    restart: unless-stopped
+    depends_on:
+      - waha
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      WAHA_DOMAIN: ${WAHA_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - waha
+
+networks:
+  waha:
+
+volumes:
+  caddy_data:
+  caddy_config:

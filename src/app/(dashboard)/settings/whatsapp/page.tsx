@@ -28,7 +28,7 @@ export default async function WhatsAppSettingsPage() {
     .limit(1)
     .maybeSingle();
 
-  const session = canManageWaha ? await getWahaSession().catch(() => null) : null;
+  const session = await getWahaSession().catch(() => null);
   const botNumber = session?.me?.id ? fromWahaChatId(session.me.id) : null;
   const displayUserPhone = latestLink?.phone_e164 ?? data?.whatsapp_phone_e164 ?? "Belum terhubung";
 
