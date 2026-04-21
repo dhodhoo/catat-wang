@@ -1,0 +1,53 @@
+name: Reminder Scheduler
+
+on:
+  schedule:
+    # GitHub Actions minimal interval is every 5 minutes.
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: reminder-scheduler
+  cancel-in-progress: false
+
+jobs:
+  trigger-reminders:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Trigger reminder cron endpoint (soft-fail)
+        env:
+          APP_BASE_URL: ${{ vars.APP_BASE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -uo pipefail
+
+          BASE_URL="${APP_BASE_URL:-https://catat-wang.vercel.app}"
+          URL="${BASE_URL%/}/api/cron/send-reminders"
+
+          if [ -z "${CRON_SECRET:-}" ]; then
+            echo "CRON_SECRET is not configured. Skipping trigger."
+            exit 0
+          fi
+
+          echo "Calling ${URL}"
+
+          RESPONSE_FILE="$(mktemp)"
+          HTTP_CODE="$(curl -sS -o "$RESPONSE_FILE" -w "%{http_code}" \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "$URL" || true)"
+
+          echo "HTTP ${HTTP_CODE:-unknown}"
+          cat "$RESPONSE_FILE" || true
+
+          if [ -z "${HTTP_CODE:-}" ] || [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
+            echo "Warning: reminder trigger returned non-2xx. Workflow marked successful to avoid email spam."
+            exit 0
+          fi
+
+          if ! grep -q '"success":true' "$RESPONSE_FILE"; then
+            echo "Warning: reminder trigger payload is not success=true. Workflow marked successful to avoid email spam."
+            exit 0
+          fi
+
+          echo "Reminder trigger succeeded."
