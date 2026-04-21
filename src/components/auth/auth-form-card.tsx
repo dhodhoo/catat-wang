@@ -42,13 +42,16 @@ export function AuthFormCard({
       if (!response.ok) {
         setError(data.message ?? "Authentication failed.");
       } else {
-        setMessage(data.status ? `Status: ${data.status}` : "Berhasil.");
-        if (data.status === "ok" || data.status === "signed_in" || data.status === "verified") {
+        const status = String(data.status ?? "");
+        if (status === "ok" || status === "signed_in" || status === "verified") {
           window.location.href = "/dashboard";
+          return;
         }
-        if (data.status === "verification_required") {
+        if (status === "verification_required") {
           window.location.href = `/verify-email?email=${encodeURIComponent(String(payload.email ?? ""))}`;
+          return;
         }
+        setMessage(data.message ?? "Berhasil.");
       }
     } finally {
       submitLockRef.current = false;

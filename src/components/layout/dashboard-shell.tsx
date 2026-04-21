@@ -20,7 +20,7 @@ const navItems: Array<{ href: Route; label: string; icon: ComponentType<{ classN
   { href: "/dashboard", label: "Beranda", icon: LayoutGrid },
   { href: "/transactions", label: "Transaksi", icon: ListOrdered },
   { href: "/reports", label: "Laporan", icon: ChartColumnBig },
-  { href: "/settings", label: "Settings", icon: Settings }
+  { href: "/settings/categories", label: "Settings", icon: Settings }
 ];
 
 const settingsSubItems: Array<{ href: Route; label: string; icon: ComponentType<{ className?: string }> }> = [
@@ -104,7 +104,12 @@ export function DashboardShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isItemActive = (href: Route) => pathname === href || (href !== "/dashboard" && pathname.startsWith(`${href}/`));
+  const isItemActive = (href: Route) => {
+    if (href === "/settings/categories") {
+      return pathname === "/settings" || pathname.startsWith("/settings/");
+    }
+    return pathname === href || (href !== "/dashboard" && pathname.startsWith(`${href}/`));
+  };
   const headerMeta = getHeaderMeta(pathname, title);
   const isSettingsRoute = pathname === "/settings" || pathname.startsWith("/settings/");
 
