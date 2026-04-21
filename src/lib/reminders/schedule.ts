@@ -6,6 +6,6 @@ export interface ReminderScheduleSyncResult {
 export async function syncReminderSchedule(): Promise<ReminderScheduleSyncResult> {
   return {
     status: "global_scheduler_active",
-    message: "Scheduler reminder membutuhkan trigger eksternal ke /api/cron/send-reminders."
+    message: "Scheduler reminder aktif via trigger eksternal 5-menitan ke /api/cron/send-reminders."
   };
 }

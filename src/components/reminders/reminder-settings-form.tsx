@@ -133,6 +133,7 @@ export function ReminderSettingsForm({ initialSettings }: ReminderSettingsFormPr
                   className="field-input disabled:opacity-50"
                   disabled={!enabled}
                   onChange={(event) => setTime(event.target.value)}
+                  step={300}
                   type="time"
                   value={time}
                 />
