@@ -1,0 +1,20 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:3000",
+  "loginUser": "test.qa+20260421@catatwang.local",
+  "loginPassword": "Test1234!@#",
+  "executionArgs": {
+    "projectName": "pencatat-wang",
+    "projectPath": "D:\\pencatat-wang",
+    "testIds": [],
+    "additionalInstruction": "Gunakan skenario prioritas P0 dari TESTSPRITE_SCENARIOS.md sebagai baseline. Fokus validasi auth, transaksi, reminder settings, dan endpoint cron reminder. Jika login dibutuhkan gunakan akun test: test.qa+20260421@catatwang.local / Test1234!@#.",
+    "serverMode": "production",
+    "envs": {
+      "API_KEY": "sk-user-4_y7ad2-wOe8ThkurKVRlKmXPbKidz_mVhArfEuwSNSsywE-R_RSUy28QOgLl4Hcky4ylmhAkgViIqA-u9LxOCjVheSCbGE0nB8Gz8qloubbaf1gRFo3jkELC0AYUAGXINo"
+    }
+  },
+  "serverPort": 63240,
+  "proxy": "http://5fa20820-f8cb-4ac9-88ac-f32608059e6e:XAPUxnFFy9k6LfQqsX7J0Bp5h0RJzySU@tun.testsprite.com:8080"
+}

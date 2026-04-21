@@ -5,23 +5,7 @@ import { parseCommand } from "@/lib/parser/parse-command";
 import { parseWithAi } from "@/lib/parser/ai-parser";
 import type { ParsedIncomingText, ReviewReason } from "@/types/domain";
 
-export async function parseIncomingText(
-  rawText: string,
-  receivedAt: Date,
-  timezone: string
-): Promise<ParsedIncomingText> {
-  // Try AI first
-  const aiResult = await parseWithAi(rawText, receivedAt, timezone);
-  if (aiResult && aiResult.intent !== "unknown") {
-    return aiResult;
-  }
-
-  // Fallback to regex
-  const command = parseCommand(rawText, receivedAt, timezone);
-  if (command) {
-    return command;
-  }
-
+function parseTransactionManual(rawText: string, receivedAt: Date, timezone: string): ParsedIncomingText {
   const amount = extractAmountFromText(rawText);
   if (!amount) {
     return { intent: "unknown" };
@@ -51,4 +35,30 @@ export async function parseIncomingText(
       reviewReasons
     }
   };
+}
+
+export async function parseIncomingText(
+  rawText: string,
+  receivedAt: Date,
+  timezone: string
+): Promise<ParsedIncomingText> {
+  // Manual parser always handles command intents first.
+  const commandResult = parseCommand(rawText, receivedAt, timezone);
+  if (commandResult) {
+    return commandResult;
+  }
+
+  // Then try manual transaction parsing.
+  const manualResult = parseTransactionManual(rawText, receivedAt, timezone);
+  if (manualResult.intent !== "unknown") {
+    return manualResult;
+  }
+
+  // AI fallback runs only when manual parser cannot parse anything.
+  const aiResult = await parseWithAi(rawText, receivedAt, timezone);
+  if (aiResult && aiResult.intent !== "unknown") {
+    return aiResult;
+  }
+
+  return { intent: "unknown" };
 }

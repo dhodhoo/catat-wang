@@ -13,6 +13,12 @@ import { fail, ok } from "@/lib/utils/http";
 const SESSION_POLL_ATTEMPTS = 6;
 const SESSION_POLL_DELAY_MS = 1500;
 
+function assertWebhookSecretConfigured() {
+  if (process.env.NODE_ENV === "production" && !env.WAHA_WEBHOOK_SECRET) {
+    throw new Error("WAHA_WEBHOOK_SECRET wajib diisi pada environment production.");
+  }
+}
+
 function buildWebhookUrl() {
   const baseUrl = env.WAHA_WEBHOOK_URL ?? env.NEXT_PUBLIC_APP_URL;
   return `${baseUrl.replace(/\/$/, "")}/api/whatsapp/webhook`;
@@ -78,6 +84,7 @@ async function waitForSessionSnapshot() {
 
 export async function GET() {
   try {
+    assertWebhookSecretConfigured();
     const user = await requireCurrentUserApi();
     requireWahaInternalAdminEmail(user.email);
     const { session, qr } = await waitForSessionSnapshot();
@@ -105,6 +112,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    assertWebhookSecretConfigured();
     const user = await requireCurrentUserApi();
     requireWahaInternalAdminEmail(user.email);
     const body = (await request.json().catch(() => ({}))) as { action?: string };

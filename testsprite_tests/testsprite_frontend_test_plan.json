@@ -1,0 +1,691 @@
+[
+  {
+    "id": "TC001",
+    "title": "Sign in to access the dashboard",
+    "description": "Verifies an existing user can sign in with email and password and is taken to the dashboard successfully.",
+    "category": "Authentication (Email/Password Sign‑in)",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /sign-in"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the sign-in form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the user lands on the dashboard"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC002",
+    "title": "Dashboard updates after creating a new transaction",
+    "description": "Verifies that after creating a transaction, the dashboard reflects the change by showing the new item in recent transactions.",
+    "category": "Dashboard Analytics",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /sign-in"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the sign-in form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to view transactions"
+      },
+      {
+        "type": "action",
+        "description": "Start adding a new transaction"
+      },
+      {
+        "type": "action",
+        "description": "Fill 99000 into the amount field"
+      },
+      {
+        "type": "action",
+        "description": "Select income as the transaction type"
+      },
+      {
+        "type": "action",
+        "description": "Fill a valid date into the transaction date field"
+      },
+      {
+        "type": "action",
+        "description": "Select a category for the transaction"
+      },
+      {
+        "type": "action",
+        "description": "Fill DashRefresh TC008 into the note field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the new transaction"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to view the dashboard"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a recent transaction with note \"DashRefresh TC008\" is displayed on the dashboard"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC003",
+    "title": "Create a new transaction from the list page",
+    "description": "Verifies an authenticated user can create a transaction and then see it appear in the transactions list.",
+    "category": "Transaction Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /sign-in"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the sign-in form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to view transactions"
+      },
+      {
+        "type": "action",
+        "description": "Start adding a new transaction"
+      },
+      {
+        "type": "action",
+        "description": "Fill 125000 into the amount field"
+      },
+      {
+        "type": "action",
+        "description": "Select expense as the transaction type"
+      },
+      {
+        "type": "action",
+        "description": "Fill a valid date into the transaction date field"
+      },
+      {
+        "type": "action",
+        "description": "Select a category for the transaction"
+      },
+      {
+        "type": "action",
+        "description": "Fill Lunch TC003 into the note field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the new transaction"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a transaction with note \"Lunch TC003\" is displayed in the transactions list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC004",
+    "title": "View dashboard totals, charts, and recent transactions after sign in",
+    "description": "Verifies an authenticated user can open the dashboard and sees summary metrics, charts, and a recent transactions section.",
+    "category": "Dashboard Analytics",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /sign-in"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the sign-in form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify dashboard summary metrics are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify recent transactions are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC005",
+    "title": "Edit an existing transaction from its detail page",
+    "description": "Verifies an authenticated user can open a transaction detail page, update its fields, and see the change reflected back in the transactions list.",
+    "category": "Transaction Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /sign-in"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the sign-in form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to view transactions"
+      },
+      {
+        "type": "action",
+        "description": "Start adding a new transaction"
+      },
+      {
+        "type": "action",
+        "description": "Fill 75000 into the amount field"
+      },
+      {
+        "type": "action",
+        "description": "Select expense as the transaction type"
+      },
+      {
+        "type": "action",
+        "description": "Fill a valid date into the transaction date field"
+      },
+      {
+        "type": "action",
+        "description": "Select a category for the transaction"
+      },
+      {
+        "type": "action",
+        "description": "Fill ToEdit TC005 into the note field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the new transaction"
+      },
+      {
+        "type": "action",
+        "description": "Open the transaction with note \"ToEdit TC005\" from the list"
+      },
+      {
+        "type": "action",
+        "description": "Fill EditedNote TC005 into the note field"
+      },
+      {
+        "type": "action",
+        "description": "Save the transaction changes"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to view transactions"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a transaction with note \"EditedNote TC005\" is displayed in the transactions list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC006",
+    "title": "Persist daily reminder settings across reload",
+    "description": "This test verifies an authenticated user can enable reminders, set a daily schedule time, save, and after reload the saved settings remain selected.",
+    "category": "Reminder Scheduling",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /sign-in"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the sign-in form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to reminders"
+      },
+      {
+        "type": "action",
+        "description": "Enable reminders"
+      },
+      {
+        "type": "action",
+        "description": "Select daily frequency"
+      },
+      {
+        "type": "action",
+        "description": "Select a valid reminder time on a 5-minute increment"
+      },
+      {
+        "type": "action",
+        "description": "Save reminder settings"
+      },
+      {
+        "type": "action",
+        "description": "Reload the page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify reminders are still enabled"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the saved frequency and time are still selected"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC007",
+    "title": "Request a WhatsApp link code and view code details",
+    "description": "This test verifies an authenticated user can request a WhatsApp link code and sees the generated code details displayed on the settings page.",
+    "category": "WhatsApp Linking and Webhook Intake",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /sign-in"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the sign-in form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to WhatsApp settings"
+      },
+      {
+        "type": "action",
+        "description": "Request a WhatsApp link code"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a link code is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify link code expiry information is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC008",
+    "title": "Filter transactions by date, type, and category",
+    "description": "Verifies an authenticated user can narrow the transaction list using filters and see only matching results.",
+    "category": "Transaction Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /sign-in"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the sign-in form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to view transactions"
+      },
+      {
+        "type": "action",
+        "description": "Start adding a new transaction"
+      },
+      {
+        "type": "action",
+        "description": "Fill 50000 into the amount field"
+      },
+      {
+        "type": "action",
+        "description": "Select expense as the transaction type"
+      },
+      {
+        "type": "action",
+        "description": "Fill a valid date into the transaction date field"
+      },
+      {
+        "type": "action",
+        "description": "Select a category for the transaction"
+      },
+      {
+        "type": "action",
+        "description": "Fill FilterTarget TC004 into the note field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the new transaction"
+      },
+      {
+        "type": "action",
+        "description": "Set a date range filter that includes the created transaction date"
+      },
+      {
+        "type": "action",
+        "description": "Set the type filter to expense"
+      },
+      {
+        "type": "action",
+        "description": "Set the category filter to the same category used for the created transaction"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the transactions list shows a result with note \"FilterTarget TC004\""
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC009",
+    "title": "Delete a transaction from its detail page",
+    "description": "Verifies an authenticated user can delete a transaction from its detail page and the transaction is removed from the list.",
+    "category": "Transaction Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /sign-in"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the sign-in form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to view transactions"
+      },
+      {
+        "type": "action",
+        "description": "Start adding a new transaction"
+      },
+      {
+        "type": "action",
+        "description": "Fill 42000 into the amount field"
+      },
+      {
+        "type": "action",
+        "description": "Select expense as the transaction type"
+      },
+      {
+        "type": "action",
+        "description": "Fill a valid date into the transaction date field"
+      },
+      {
+        "type": "action",
+        "description": "Select a category for the transaction"
+      },
+      {
+        "type": "action",
+        "description": "Fill ToDelete TC006 into the note field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the new transaction"
+      },
+      {
+        "type": "action",
+        "description": "Open the transaction with note \"ToDelete TC006\" from the list"
+      },
+      {
+        "type": "action",
+        "description": "Initiate deleting the transaction"
+      },
+      {
+        "type": "action",
+        "description": "Confirm the deletion in the UI confirmation step"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to view transactions"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a transaction with note \"ToDelete TC006\" is not present in the transactions list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC010",
+    "title": "View WhatsApp session status after refreshing the settings page",
+    "description": "This test verifies an authenticated user can refresh the WhatsApp settings view and still see a session status section that reflects the current connection state.",
+    "category": "WhatsApp Linking and Webhook Intake",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /sign-in"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the sign-in form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to WhatsApp settings"
+      },
+      {
+        "type": "action",
+        "description": "Wait for the WhatsApp session status to load"
+      },
+      {
+        "type": "action",
+        "description": "Reload the page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify WhatsApp session status is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC011",
+    "title": "Disable reminders and verify disablement persists after reload",
+    "description": "This test verifies an authenticated user can disable reminders, save, and after reload reminders remain disabled.",
+    "category": "Reminder Scheduling",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /sign-in"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the sign-in form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to reminders"
+      },
+      {
+        "type": "action",
+        "description": "Disable reminders"
+      },
+      {
+        "type": "action",
+        "description": "Save reminder settings"
+      },
+      {
+        "type": "action",
+        "description": "Reload the page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify reminders are disabled"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC012",
+    "title": "Block non-5-minute reminder times then allow saving a valid time",
+    "description": "This test verifies the reminders form rejects a non-5-minute increment time with a validation error and allows saving after choosing a valid time.",
+    "category": "Reminder Scheduling",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /sign-in"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the sign-in form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to reminders"
+      },
+      {
+        "type": "action",
+        "description": "Enable reminders"
+      },
+      {
+        "type": "action",
+        "description": "Select daily frequency"
+      },
+      {
+        "type": "action",
+        "description": "Fill a time value that is not on a 5-minute increment into the reminder time field"
+      },
+      {
+        "type": "action",
+        "description": "Save reminder settings"
+      },
+      {
+        "type": "action",
+        "description": "Select a valid reminder time on a 5-minute increment"
+      },
+      {
+        "type": "action",
+        "description": "Save reminder settings"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the reminder settings are saved successfully"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC013",
+    "title": "Reject sign in with invalid credentials",
+    "description": "Verifies a user who enters an incorrect password cannot sign in and sees a credential error while staying on the sign-in page.",
+    "category": "Authentication (Email/Password Sign‑in)",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /sign-in"
+      },
+      {
+        "type": "action",
+        "description": "Fill invalid-user@example.com into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill wrong-password into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the sign-in form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a credential validation error is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the user remains on the sign-in page"
+      }
+    ],
+    "priority": "Low"
+  }
+]

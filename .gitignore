@@ -48,6 +48,10 @@ public/waha-qr.png
 test-*.ts
 test-*.js
 tmp-*
+.tmp_*
 *-utf8.*
 .env*.local
 *.md
+
+# Local migration configs
+scripts/migrate-waha-vps.config.ps1

@@ -1,0 +1,176 @@
+﻿version: "2"
+type: frontend
+tech_stack:
+  - TypeScript
+  - Next.js App Router
+  - React
+  - Tailwind CSS
+  - InsForge SDK
+routes:
+  - path: /
+    file: src/app/page.tsx
+    auth_required: false
+    description: Landing page
+  - path: /sign-in
+    file: src/app/(auth)/sign-in/page.tsx
+    auth_required: false
+    description: Email/password sign in
+  - path: /sign-up
+    file: src/app/(auth)/sign-up/page.tsx
+    auth_required: false
+    description: Account registration
+  - path: /forgot-password
+    file: src/app/(auth)/forgot-password/page.tsx
+    auth_required: false
+    description: Request password reset
+  - path: /reset-password
+    file: src/app/(auth)/reset-password/page.tsx
+    auth_required: false
+    description: Complete password reset
+  - path: /verify-email
+    file: src/app/(auth)/verify-email/page.tsx
+    auth_required: false
+    description: Verify email with OTP
+  - path: /dashboard
+    file: src/app/(dashboard)/dashboard/page.tsx
+    auth_required: true
+    description: Financial summary dashboard
+  - path: /transactions
+    file: src/app/(dashboard)/transactions/page.tsx
+    auth_required: true
+    description: Transaction list and filters
+  - path: /transactions/[id]
+    file: src/app/(dashboard)/transactions/[id]/page.tsx
+    auth_required: true
+    description: Transaction detail and edit
+  - path: /categories
+    file: src/app/(dashboard)/categories/page.tsx
+    auth_required: true
+    description: Manage income/expense categories
+  - path: /reminders
+    file: src/app/(dashboard)/reminders/page.tsx
+    auth_required: true
+    description: Configure WhatsApp reminders
+  - path: /reports
+    file: src/app/(dashboard)/reports/page.tsx
+    auth_required: true
+    description: Monthly report list and generation
+  - path: /settings/whatsapp
+    file: src/app/(dashboard)/settings/whatsapp/page.tsx
+    auth_required: true
+    description: WhatsApp linking and session status
+features:
+  - name: Authentication
+    description: Register, verify email, sign in/out, and password reset flows
+    files:
+      - src/app/(auth)/sign-in/page.tsx
+      - src/app/(auth)/sign-up/page.tsx
+      - src/app/api/auth/sign-in/route.ts
+      - src/app/api/auth/sign-up/route.ts
+      - src/lib/insforge/auth.ts
+    entry_route: /sign-in
+    user_interactions:
+      - Fill email and password fields
+      - Submit sign in form
+      - Register account and verify email code
+      - Request and complete password reset
+    api_calls:
+      - method: POST
+        endpoint: /api/auth/sign-in
+      - method: POST
+        endpoint: /api/auth/sign-up
+      - method: POST
+        endpoint: /api/auth/verify-email
+      - method: POST
+        endpoint: /api/auth/reset-password/request
+    auth_required: false
+  - name: Transaction Management
+    description: Create, list, filter, update, and delete user transactions
+    files:
+      - src/app/(dashboard)/transactions/page.tsx
+      - src/app/api/transactions/route.ts
+      - src/app/api/transactions/[id]/route.ts
+      - src/lib/transactions/service.ts
+    entry_route: /transactions
+    user_interactions:
+      - Open transactions page
+      - Add transaction with amount, type, date, category, note
+      - Filter by date/type/category
+      - Open detail page and update or delete transaction
+    api_calls:
+      - method: GET
+        endpoint: /api/transactions
+      - method: POST
+        endpoint: /api/transactions
+      - method: PATCH
+        endpoint: /api/transactions/[id]
+      - method: DELETE
+        endpoint: /api/transactions/[id]
+    auth_required: true
+  - name: Dashboard Analytics
+    description: Display summary cards, recent transactions, and category trends
+    files:
+      - src/app/(dashboard)/dashboard/page.tsx
+      - src/app/api/dashboard/summary/route.ts
+      - src/app/api/dashboard/cashflow/route.ts
+      - src/app/api/dashboard/top-expense-categories/route.ts
+    entry_route: /dashboard
+    user_interactions:
+      - Open dashboard after login
+      - View totals and charts
+      - Review recent transaction widgets
+    api_calls:
+      - method: GET
+        endpoint: /api/dashboard/summary
+      - method: GET
+        endpoint: /api/dashboard/cashflow
+      - method: GET
+        endpoint: /api/dashboard/recent-transactions
+    auth_required: true
+  - name: WhatsApp Linking and Webhook Intake
+    description: Link WhatsApp account and process incoming WhatsApp messages into transactions
+    files:
+      - src/app/(dashboard)/settings/whatsapp/page.tsx
+      - src/app/api/whatsapp/link/initiate/route.ts
+      - src/app/api/whatsapp/webhook/route.ts
+      - src/app/api/whatsapp/session/route.ts
+    entry_route: /settings/whatsapp
+    user_interactions:
+      - Request link code from settings page
+      - Send link code to WhatsApp bot
+      - Check WA session/QR status in settings
+    api_calls:
+      - method: POST
+        endpoint: /api/whatsapp/link/initiate
+      - method: GET
+        endpoint: /api/whatsapp/session
+      - method: POST
+        endpoint: /api/whatsapp/webhook
+    auth_required: true
+  - name: Reminder Scheduling
+    description: Save reminder preferences and trigger reminder dispatch through cron endpoint
+    files:
+      - src/app/(dashboard)/reminders/page.tsx
+      - src/app/api/reminders/settings/route.ts
+      - src/app/api/cron/send-reminders/route.ts
+      - .github/workflows/reminder-cron.yml
+    entry_route: /reminders
+    user_interactions:
+      - Enable or disable reminders
+      - Choose daily/weekly frequency and time
+      - Save settings and verify persistence
+    api_calls:
+      - method: GET
+        endpoint: /api/reminders/settings
+      - method: PUT
+        endpoint: /api/reminders/settings
+      - method: GET
+        endpoint: /api/cron/send-reminders
+    auth_required: true
+known_limitations:
+  - issue: Reminder dispatch depends on external scheduler (GitHub Actions) and WAHA availability.
+    location: .github/workflows/reminder-cron.yml
+    impact: If scheduler secret/runtime fails, reminders are not triggered automatically.
+  - issue: OCR receipt input is currently not supported in WhatsApp webhook flow.
+    location: src/app/api/whatsapp/webhook/route.ts
+    impact: Image messages receive fallback text instead of transaction extraction.

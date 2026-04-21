@@ -48,8 +48,12 @@ function toTotalMinutes(timeValue?: string | null) {
 export async function GET(request: NextRequest) {
   const cronSecret = process.env.CRON_SECRET;
   const authHeader = request.headers.get("authorization");
+  const tokenQuery = request.nextUrl.searchParams.get("token");
 
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+  const authorizedByHeader = Boolean(cronSecret && authHeader === `Bearer ${cronSecret}`);
+  const authorizedByQuery = Boolean(cronSecret && tokenQuery === cronSecret);
+
+  if (!authorizedByHeader && !authorizedByQuery) {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
   }
 

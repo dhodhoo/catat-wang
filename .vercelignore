@@ -5,3 +5,14 @@ node_modules
 deploy-prod.log
 .next-dev.log
 .next-dev.err.log
+
+# Never upload local credentials or backups
+.env
+.env.*
+*.bak
+*.bak-*
+
+# Temporary incident/debug artifacts
+.tmp*
+tmp-*
+*.tmp

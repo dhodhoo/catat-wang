@@ -148,11 +148,18 @@ export async function resolveWahaPhone(chatIdOrPhone: string) {
 }
 
 export function verifyWhatsAppSignature(rawBody: string, signature: string | null) {
+  const isProduction = process.env.NODE_ENV === "production";
+
   if (!env.WAHA_WEBHOOK_SECRET) {
-    return true;
+    return !isProduction;
   }
 
   if (!signature) {
+    return false;
+  }
+
+  const normalizedSignature = signature.trim().toLowerCase().replace(/^sha512=/, "");
+  if (!/^[a-f0-9]+$/.test(normalizedSignature)) {
     return false;
   }
 
@@ -161,7 +168,11 @@ export function verifyWhatsAppSignature(rawBody: string, signature: string | nul
     .update(rawBody)
     .digest("hex");
 
-  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
+  if (normalizedSignature.length !== expected.length) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(normalizedSignature));
 }
 
 export async function sendWhatsAppTextMessage(to: string, body: string) {
