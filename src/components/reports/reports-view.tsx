@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   ArrowPathIcon,
   ChartBarIcon,
+  ArrowDownTrayIcon,
   DocumentChartBarIcon,
 } from "@heroicons/react/24/outline";
 import { Trash2 } from "lucide-react";
@@ -37,6 +38,7 @@ export function ReportsView({
     initialReports[0] || null,
   );
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [isDeleting, startDeleteTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -116,6 +118,36 @@ export function ReportsView({
       setSelectedReport(remainingReports[0] ?? null);
       router.refresh();
     });
+  }
+
+  async function downloadReportPdf(report: MonthlyReport) {
+    setError(null);
+    setIsDownloading(true);
+
+    try {
+      const response = await fetch(`/api/reports/${report.id}/pdf`, {
+        method: "GET",
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.message ?? "Gagal mengunduh PDF laporan.");
+      }
+
+      const blob = await response.blob();
+      const objectUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = `laporan-${report.month_year}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(objectUrl);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setIsDownloading(false);
+    }
   }
 
   return (
@@ -328,6 +360,15 @@ export function ReportsView({
                     </h3>
                   </div>
                   <div className="flex items-center gap-3">
+                    <button
+                      className="button-primary gap-2 px-4 py-2"
+                      disabled={isDownloading}
+                      onClick={() => downloadReportPdf(selectedReport)}
+                      type="button"
+                    >
+                      <ArrowDownTrayIcon className="h-4 w-4" />
+                      {isDownloading ? "Menyiapkan PDF..." : "Download PDF"}
+                    </button>
                     <button
                       className="button-danger gap-2 px-4 py-2"
                       disabled={isDeleting}

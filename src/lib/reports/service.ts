@@ -27,6 +27,17 @@ export interface GeneratedMonthlyReportSummary {
   }>;
 }
 
+export interface MonthlyReportTransactionRow {
+  id: string;
+  transaction_date: string;
+  type: "income" | "expense";
+  amount: number;
+  note: string | null;
+  categories: {
+    name?: string | null;
+  } | null;
+}
+
 function toMonthYearDate(year: number, month: number) {
   return `${year}-${String(month).padStart(2, "0")}-01`;
 }
@@ -120,4 +131,26 @@ export async function generateMonthlyReportForUser(input: GenerateMonthlyReportI
   }
 
   return summary;
+}
+
+export async function getMonthlyReportTransactions(input: {
+  userId: string;
+  startDate: string;
+  endDate: string;
+}) {
+  const client = createInsforgeAdminClient();
+  const { data, error } = await client.database
+    .from("transactions")
+    .select("id, transaction_date, type, amount, note, categories(name)")
+    .eq("user_id", input.userId)
+    .gte("transaction_date", input.startDate)
+    .lte("transaction_date", input.endDate)
+    .order("transaction_date", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data ?? []) as MonthlyReportTransactionRow[];
 }
