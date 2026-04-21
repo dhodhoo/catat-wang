@@ -6,6 +6,6 @@ export interface ReminderScheduleSyncResult {
 export async function syncReminderSchedule(): Promise<ReminderScheduleSyncResult> {
   return {
     status: "global_scheduler_active",
-    message: "Global scheduler send-reminders aktif. Perubahan reminder cukup disimpan di profile user."
+    message: "Scheduler reminder membutuhkan trigger eksternal ke /api/cron/send-reminders."
   };
 }

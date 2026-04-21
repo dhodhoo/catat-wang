@@ -71,7 +71,27 @@ async function sendWhatsAppMessage(to: string, body: string) {
   }
 }
 
-export default async function handler() {
+export default async function handler(req: Request) {
+  const serviceKey = Deno.env.get("INSFORGE_SERVICE_KEY");
+  const reminderWebhookSecret = Deno.env.get("REMINDER_WEBHOOK_SECRET");
+  const authHeader = req.headers.get("Authorization");
+  const reminderSecretHeader = req.headers.get("X-Reminder-Webhook-Secret");
+
+  const hasAnyCredential = Boolean(serviceKey || reminderWebhookSecret);
+  const authenticatedByServiceKey = Boolean(serviceKey && authHeader === `Bearer ${serviceKey}`);
+  const authenticatedByWebhookSecret = Boolean(
+    reminderWebhookSecret && reminderSecretHeader === reminderWebhookSecret
+  );
+
+  if (hasAnyCredential && !authenticatedByServiceKey && !authenticatedByWebhookSecret) {
+    return new Response(JSON.stringify({ status: "unauthorized" }), {
+      status: 401,
+      headers: {
+        "Content-Type": "application/json"
+      }
+    });
+  }
+
   if (!Deno.env.get("WAHA_BASE_URL") || !Deno.env.get("WAHA_API_KEY")) {
     return new Response(JSON.stringify({ status: "skipped", reason: "WAHA is not configured" }), {
       status: 200,
