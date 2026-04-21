@@ -54,6 +54,24 @@ describe("parseIncomingText", () => {
     expect(parseWithAiMock).not.toHaveBeenCalled();
   });
 
+  it("uses local timezone date for early-hour messages", async () => {
+    const parsed = await parseIncomingText("jajan 10rb", new Date("2026-04-21T17:30:00Z"), "Asia/Jakarta");
+
+    expect(parsed.intent).toBe("create");
+    if (parsed.intent === "create") {
+      expect(parsed.transaction.transactionDate).toBe("2026-04-22");
+    }
+  });
+
+  it("resolves 'kemarin' from local timezone date", async () => {
+    const parsed = await parseIncomingText("kemarin jajan 10rb", new Date("2026-04-21T17:30:00Z"), "Asia/Jakarta");
+
+    expect(parsed.intent).toBe("create");
+    if (parsed.intent === "create") {
+      expect(parsed.transaction.transactionDate).toBe("2026-04-21");
+    }
+  });
+
   it("parses delete command with manual parser and does not call AI", async () => {
     const parsed = await parseIncomingText("hapus transaksi terakhir", new Date("2026-04-02T10:00:00Z"), "Asia/Jakarta");
 

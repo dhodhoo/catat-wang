@@ -1,14 +1,18 @@
-import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
+import { formatInTimeZone } from "date-fns-tz";
+
+function shiftDateString(baseDate: string, days: number) {
+  const utcMidnight = new Date(`${baseDate}T00:00:00Z`);
+  utcMidnight.setUTCDate(utcMidnight.getUTCDate() + days);
+  return utcMidnight.toISOString().slice(0, 10);
+}
 
 export function resolveTransactionDate(rawText: string, receivedAt: Date, timezone: string) {
   const lower = rawText.toLowerCase();
-  const base = fromZonedTime(receivedAt, timezone);
+  const baseDate = formatInTimeZone(receivedAt, timezone, "yyyy-MM-dd");
 
   if (lower.includes("kemarin")) {
-    const yesterday = new Date(base);
-    yesterday.setUTCDate(yesterday.getUTCDate() - 1);
-    return formatInTimeZone(yesterday, timezone, "yyyy-MM-dd");
+    return shiftDateString(baseDate, -1);
   }
 
-  return formatInTimeZone(base, timezone, "yyyy-MM-dd");
+  return baseDate;
 }
