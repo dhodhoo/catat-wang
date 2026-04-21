@@ -62,6 +62,21 @@ export type ParsedIncomingText =
   | LinkAccountIntentPayload
   | UnknownIntentPayload;
 
+export type BatchItemStatus = "parsed" | "unknown" | "rejected";
+
+export interface BatchParsedItem {
+  raw: string;
+  parsed: ParsedIncomingText;
+  status: BatchItemStatus;
+  reason?: string;
+}
+
+export interface BatchParseResult {
+  status: "ok" | "mixed_not_allowed";
+  items: BatchParsedItem[];
+  message?: string;
+}
+
 export interface DashboardSummary {
   incomeTotal: number;
   expenseTotal: number;

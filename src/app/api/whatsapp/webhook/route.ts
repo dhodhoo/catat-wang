@@ -1,6 +1,6 @@
 import { getCategoryIdByName } from "@/lib/categories/service";
 import { createInsforgeAdminClient } from "@/lib/insforge/server";
-import { parseIncomingText } from "@/lib/parser/parse-text-transaction";
+import { parseIncomingTextBatch } from "@/lib/parser/parse-text-transaction";
 
 import { createTransaction, deleteLastTransaction, updateLastTransaction } from "@/lib/transactions/service";
 import { fail, ok } from "@/lib/utils/http";
@@ -13,9 +13,10 @@ import {
   verifyWhatsAppSignature
 } from "@/lib/whatsapp/client";
 import {
+  buildBatchTransactionSummaryMessage,
   buildLinkInstructionMessage,
+  buildMixedBatchInstructionMessage,
   buildLinkSuccessMessage,
-  buildTransactionSavedMessage
 } from "@/lib/whatsapp/templates";
 import { computeDedupeHash, normalizeWhatsappPayload } from "@/lib/whatsapp/webhook";
 
@@ -182,7 +183,22 @@ export async function POST(request: Request) {
     }
 
     if (message.type === "text" || message.type === "command") {
-      const parsed = await parseIncomingText(message.text ?? "", message.receivedAt, profile.timezone ?? "Asia/Jakarta");
+      const batchResult = await parseIncomingTextBatch(
+        message.text ?? "",
+        message.receivedAt,
+        profile.timezone ?? "Asia/Jakarta"
+      );
+      const firstParsed = batchResult.items[0]?.parsed;
+      const hasCreateItem = batchResult.items.some((item) => item.parsed.intent === "create");
+      const initialIntent =
+        batchResult.status === "mixed_not_allowed"
+          ? "unknown"
+          : batchResult.items.length === 1 && firstParsed
+            ? firstParsed.intent
+            : hasCreateItem
+              ? "create"
+              : "unknown";
+
       const messageLog = await persistMessageLog({
         whatsapp_message_id: message.messageId,
         user_id: profile.id,
@@ -192,48 +208,32 @@ export async function POST(request: Request) {
         media_id: null,
         media_mime_type: null,
         media_sha256: null,
-        intent: parsed.intent,
-        parsed_payload: parsed,
+        intent: initialIntent,
+        parsed_payload: batchResult,
         dedupe_hash: computeDedupeHash({ from: senderPhone, text: message.text }),
-        processing_status: parsed.intent === "unknown" ? "needs_input" : "received",
+        processing_status: initialIntent === "unknown" ? "needs_input" : "received",
         transaction_id: null,
         provider_payload: message.providerPayload,
         received_at: message.receivedAt.toISOString()
       });
 
-      if (parsed.intent === "create") {
-        const categoryId = await getCategoryIdByName("", profile.id, parsed.transaction.type, parsed.transaction.categoryName);
-        const transaction = await createTransaction("", {
-          userId: profile.id,
-          categoryId,
-          sourceChannel: "whatsapp_text",
-          transaction: parsed.transaction,
-          sourceMessageLogId: messageLog.id,
-          rawInputReference: message.text
-        });
-
-        await admin.database
-          .from("message_logs")
-          .update({
-            processing_status: "processed",
-            transaction_id: transaction.id
-          })
-          .eq("id", messageLog.id);
-
+      if (batchResult.status === "mixed_not_allowed") {
         await sendWhatsAppTextMessage(
           message.replyToChatId,
-          buildTransactionSavedMessage({
-            amount: transaction.amount,
-            categoryName: parsed.transaction.categoryName,
-            type: parsed.transaction.type
-          })
+          buildMixedBatchInstructionMessage(batchResult.message)
         );
-      } else if (parsed.intent === "update_last") {
+        continue;
+      }
+
+      const parsedItems = batchResult.items;
+      const singleCommandParsed = parsedItems.length === 1 ? parsedItems[0]?.parsed : null;
+
+      if (singleCommandParsed?.intent === "update_last") {
         const patch: Record<string, unknown> = {};
-        if (parsed.patch.amount) patch.amount = parsed.patch.amount;
-        if (parsed.patch.transactionDate) patch.transaction_date = parsed.patch.transactionDate;
-        if (parsed.patch.categoryName) {
-          patch.category_id = await getCategoryIdByName("", profile.id, "expense", parsed.patch.categoryName);
+        if (singleCommandParsed.patch.amount) patch.amount = singleCommandParsed.patch.amount;
+        if (singleCommandParsed.patch.transactionDate) patch.transaction_date = singleCommandParsed.patch.transactionDate;
+        if (singleCommandParsed.patch.categoryName) {
+          patch.category_id = await getCategoryIdByName("", profile.id, "expense", singleCommandParsed.patch.categoryName);
         }
         const transaction = await updateLastTransaction("", profile.id, patch);
         await admin.database
@@ -241,19 +241,112 @@ export async function POST(request: Request) {
           .update({ processing_status: "processed", transaction_id: transaction.id })
           .eq("id", messageLog.id);
         await sendWhatsAppTextMessage(message.replyToChatId, "Transaksi terakhir berhasil diperbarui.");
-      } else if (parsed.intent === "delete_last") {
+        continue;
+      }
+
+      if (singleCommandParsed?.intent === "delete_last") {
         const transaction = await deleteLastTransaction("", profile.id);
         await admin.database
           .from("message_logs")
           .update({ processing_status: "processed", transaction_id: transaction.id })
           .eq("id", messageLog.id);
         await sendWhatsAppTextMessage(message.replyToChatId, "Transaksi terakhir berhasil dihapus.");
-      } else {
-        await sendWhatsAppTextMessage(
-          message.replyToChatId,
-          "Pesan belum terbaca sebagai transaksi. Contoh: jajan 25rb atau gaji masuk 5jt."
-        );
+        continue;
       }
+
+      if (singleCommandParsed?.intent === "link_account") {
+        await sendWhatsAppTextMessage(message.replyToChatId, buildLinkInstructionMessage());
+        continue;
+      }
+
+      const successes: Array<{
+        id: string;
+        raw: string;
+        amount: number;
+        categoryName: string;
+        type: "income" | "expense";
+      }> = [];
+      const failures: Array<{ raw: string; reason: string }> = [];
+
+      for (const item of parsedItems) {
+        if (item.parsed.intent !== "create") {
+          failures.push({
+            raw: item.raw,
+            reason:
+              item.parsed.intent === "unknown"
+                ? "Format transaksi belum terbaca."
+                : "Hanya data transaksi yang didukung untuk batch."
+          });
+          continue;
+        }
+
+        try {
+          const categoryId = await getCategoryIdByName(
+            "",
+            profile.id,
+            item.parsed.transaction.type,
+            item.parsed.transaction.categoryName
+          );
+          const transaction = await createTransaction("", {
+            userId: profile.id,
+            categoryId,
+            sourceChannel: "whatsapp_text",
+            transaction: item.parsed.transaction,
+            sourceMessageLogId: messageLog.id,
+            rawInputReference: item.raw
+          });
+
+          successes.push({
+            id: transaction.id,
+            raw: item.raw,
+            amount: transaction.amount,
+            categoryName: item.parsed.transaction.categoryName,
+            type: item.parsed.transaction.type
+          });
+        } catch (error: any) {
+          failures.push({
+            raw: item.raw,
+            reason: error?.message ?? "Gagal menyimpan transaksi."
+          });
+        }
+      }
+
+      const firstTransactionId = successes[0]?.id ?? null;
+      await admin.database
+        .from("message_logs")
+        .update({
+          processing_status: successes.length > 0 ? "processed" : "needs_input",
+          parsed_payload: {
+            ...batchResult,
+            summary: {
+              successCount: successes.length,
+              failureCount: failures.length,
+              successes: successes.map((item) => ({
+                id: item.id,
+                raw: item.raw,
+                amount: item.amount,
+                categoryName: item.categoryName,
+                type: item.type
+              })),
+              failures
+            }
+          },
+          transaction_id: firstTransactionId
+        })
+        .eq("id", messageLog.id);
+
+      await sendWhatsAppTextMessage(
+        message.replyToChatId,
+        buildBatchTransactionSummaryMessage({
+          successes: successes.map((item) => ({
+            raw: item.raw,
+            amount: item.amount,
+            categoryName: item.categoryName,
+            type: item.type
+          })),
+          failures
+        })
+      );
 
       continue;
     }

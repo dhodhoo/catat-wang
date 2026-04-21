@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { extractAmountFromText } from "@/lib/parser/amount";
 import { parseWithAi } from "@/lib/parser/ai-parser";
-import { parseIncomingText } from "@/lib/parser/parse-text-transaction";
+import { parseIncomingText, parseIncomingTextBatch } from "@/lib/parser/parse-text-transaction";
 
 vi.mock("@/lib/parser/ai-parser", () => ({
   parseWithAi: vi.fn()
@@ -101,5 +101,64 @@ describe("parseIncomingText", () => {
 
     expect(parseWithAiMock).toHaveBeenCalledTimes(1);
     expect(parsed.intent).toBe("unknown");
+  });
+});
+
+describe("parseIncomingTextBatch", () => {
+  beforeEach(() => {
+    parseWithAiMock.mockReset();
+  });
+
+  it("splits comma/newline and parses each transaction", async () => {
+    const parsed = await parseIncomingTextBatch(
+      "beli baju 100k, jajan 50k\nminum 10k",
+      new Date("2026-04-02T10:00:00Z"),
+      "Asia/Jakarta"
+    );
+
+    expect(parsed.status).toBe("ok");
+    expect(parsed.items).toHaveLength(3);
+    expect(parsed.items.every((item) => item.parsed.intent === "create")).toBe(true);
+    expect(parseWithAiMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects mixed command and transaction in one message", async () => {
+    const parsed = await parseIncomingTextBatch(
+      "hapus terakhir, jajan 50k",
+      new Date("2026-04-02T10:00:00Z"),
+      "Asia/Jakarta"
+    );
+
+    expect(parsed.status).toBe("mixed_not_allowed");
+    expect(parsed.items).toHaveLength(2);
+    expect(parsed.items.every((item) => item.status === "rejected")).toBe(true);
+    expect(parseWithAiMock).not.toHaveBeenCalled();
+  });
+
+  it("calls AI only for unknown batch segments", async () => {
+    parseWithAiMock.mockResolvedValueOnce({
+      intent: "create",
+      transaction: {
+        type: "expense",
+        amount: 12000,
+        transactionDate: "2026-04-02",
+        categoryName: "Belanja",
+        note: "ai fallback",
+        reviewStatus: "clear",
+        reviewReasons: []
+      }
+    });
+
+    const parsed = await parseIncomingTextBatch(
+      "jajan 50k, tolong catetin pengeluaran kecil tadi",
+      new Date("2026-04-02T10:00:00Z"),
+      "Asia/Jakarta"
+    );
+
+    expect(parsed.status).toBe("ok");
+    expect(parsed.items).toHaveLength(2);
+    expect(parsed.items[0]?.parsed.intent).toBe("create");
+    expect(parsed.items[1]?.parsed.intent).toBe("create");
+    expect(parseWithAiMock).toHaveBeenCalledTimes(1);
   });
 });
