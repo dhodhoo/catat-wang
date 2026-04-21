@@ -43,7 +43,12 @@ export function AuthFormCard({
         setError(data.message ?? "Authentication failed.");
       } else {
         const status = String(data.status ?? "");
-        if (status === "ok" || status === "signed_in" || status === "verified") {
+        if (endpoint === "/api/auth/reset-password/request" && status === "ok") {
+          const email = encodeURIComponent(String(payload.email ?? ""));
+          window.location.href = `/reset-password?email=${email}`;
+          return;
+        }
+        if (status === "signed_in" || status === "verified" || (endpoint === "/api/auth/sign-in" && status === "ok")) {
           window.location.href = "/dashboard";
           return;
         }
