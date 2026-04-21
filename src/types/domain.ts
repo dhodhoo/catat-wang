@@ -1,6 +1,6 @@
 export type TransactionType = "income" | "expense";
 
-export type SourceChannel = "whatsapp_text" | "whatsapp_receipt" | "web_manual";
+export type SourceChannel = "whatsapp_text" | "web_manual";
 
 export type ReviewStatus = "clear" | "need_review";
 

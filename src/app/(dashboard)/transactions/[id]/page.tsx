@@ -17,7 +17,7 @@ export default async function TransactionDetailPage({
   const client = createInsforgeServerClient(accessToken);
   const { data } = await client.database
     .from("transactions")
-    .select("*, categories(name), receipt_attachments(*)")
+    .select("*, categories(name)")
     .eq("user_id", user.id)
     .eq("id", id)
     .maybeSingle();
@@ -27,7 +27,7 @@ export default async function TransactionDetailPage({
   }
 
   return (
-    <DashboardShell title="Detail transaksi" subtitle="Lihat sumber input, nominal, dan lampiran struk bila tersedia.">
+    <DashboardShell title="Detail transaksi" subtitle="Lihat sumber input, nominal, dan kategori transaksi.">
       <div className="rounded-[1.75rem] bg-white p-6 shadow-card">
         <dl className="grid gap-4 md:grid-cols-2">
           <div>

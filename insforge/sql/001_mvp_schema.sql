@@ -35,28 +35,11 @@ CREATE TABLE IF NOT EXISTS transactions (
   transaction_date DATE NOT NULL,
   category_id UUID NOT NULL REFERENCES categories(id),
   note TEXT,
-  source_channel TEXT NOT NULL CHECK (source_channel IN ('whatsapp_text', 'whatsapp_receipt', 'web_manual')),
+  source_channel TEXT NOT NULL CHECK (source_channel IN ('whatsapp_text', 'web_manual')),
   review_status TEXT NOT NULL DEFAULT 'clear' CHECK (review_status IN ('clear', 'need_review')),
   review_reasons JSONB NOT NULL DEFAULT '[]'::jsonb,
   raw_input_reference TEXT,
   source_message_log_id UUID,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS receipt_attachments (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  transaction_id UUID NOT NULL UNIQUE REFERENCES transactions(id) ON DELETE CASCADE,
-  storage_bucket TEXT NOT NULL,
-  storage_key TEXT NOT NULL,
-  image_url TEXT NOT NULL,
-  ocr_text TEXT,
-  merchant_name TEXT,
-  detected_total BIGINT,
-  detected_date DATE,
-  ocr_confidence NUMERIC(5,4),
-  raw_ocr_payload JSONB,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -120,4 +103,3 @@ CREATE TABLE IF NOT EXISTS reminder_dispatch_logs (
 CREATE TRIGGER profiles_updated_at BEFORE UPDATE ON profiles FOR EACH ROW EXECUTE FUNCTION system.update_updated_at();
 CREATE TRIGGER categories_updated_at BEFORE UPDATE ON categories FOR EACH ROW EXECUTE FUNCTION system.update_updated_at();
 CREATE TRIGGER transactions_updated_at BEFORE UPDATE ON transactions FOR EACH ROW EXECUTE FUNCTION system.update_updated_at();
-CREATE TRIGGER receipt_attachments_updated_at BEFORE UPDATE ON receipt_attachments FOR EACH ROW EXECUTE FUNCTION system.update_updated_at();

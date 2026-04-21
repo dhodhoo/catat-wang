@@ -262,7 +262,7 @@ export async function POST(request: Request) {
     if (message.type === "image") {
       await sendWhatsAppTextMessage(
         message.replyToChatId,
-        "Maaf, pencatatan via foto struk saat ini tidak tersedia. Silakan ketik nominal transaksinya langsung, contoh:\n\n• *jajan 25rb*\n• *gaji masuk 5jt*\n• *belanja 150000*"
+        "Gambar tidak diproses oleh sistem. Silakan kirim teks transaksi langsung, contoh:\n\n• *jajan 25rb*\n• *gaji masuk 5jt*\n• *belanja 150000*"
       );
     }
   }

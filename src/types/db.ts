@@ -44,23 +44,6 @@ export interface TransactionRow {
   updated_at: string;
 }
 
-export interface ReceiptAttachmentRow {
-  id: string;
-  user_id: string;
-  transaction_id: string;
-  storage_bucket: string;
-  storage_key: string;
-  image_url: string;
-  ocr_text: string | null;
-  merchant_name: string | null;
-  detected_total: number | null;
-  detected_date: string | null;
-  ocr_confidence: number | null;
-  raw_ocr_payload: unknown;
-  created_at: string;
-  updated_at: string;
-}
-
 export interface MessageLogRow {
   id: string;
   user_id: string | null;

@@ -5,7 +5,7 @@ import type { ParsedTransactionCandidate } from "@/types/domain";
 interface CreateTransactionInput {
   userId: string;
   categoryId: string;
-  sourceChannel: "whatsapp_text" | "whatsapp_receipt" | "web_manual";
+  sourceChannel: "whatsapp_text" | "web_manual";
   transaction: ParsedTransactionCandidate;
   sourceMessageLogId?: string | null;
   rawInputReference?: string | null;

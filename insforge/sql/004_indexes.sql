@@ -3,7 +3,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_categories_user_type_name_active ON catego
 CREATE INDEX IF NOT EXISTS idx_transactions_user_date ON transactions(user_id, transaction_date DESC);
 CREATE INDEX IF NOT EXISTS idx_transactions_user_category ON transactions(user_id, category_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_user_created ON transactions(user_id, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_receipt_attachments_user_id ON receipt_attachments(user_id);
 CREATE INDEX IF NOT EXISTS idx_message_logs_message_id ON message_logs(whatsapp_message_id);
 CREATE INDEX IF NOT EXISTS idx_message_logs_user_created ON message_logs(user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_whatsapp_link_requests_user_status ON whatsapp_link_requests(user_id, status);

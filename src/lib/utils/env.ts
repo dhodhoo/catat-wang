@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const isProduction = process.env.NODE_ENV === "production";
+
 const envSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().url(),
   NEXT_PUBLIC_INSFORGE_URL: z.string().url(),
@@ -11,15 +13,15 @@ const envSchema = z.object({
   WAHA_WEBHOOK_URL: z.string().url().optional(),
   WAHA_WEBHOOK_SECRET: z.string().min(1).optional(),
   WAHA_INTERNAL_ADMIN_EMAILS: z.string().default(""),
-  RECEIPT_AI_MODEL: z.string().default("openai/gpt-4o-mini"),
   REMINDER_WEBHOOK_SECRET: z.string().min(1).optional()
 });
 
 export const env = envSchema.parse({
-  NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+  NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL ?? (isProduction ? undefined : "http://localhost:3000"),
   NEXT_PUBLIC_INSFORGE_URL:
-    process.env.NEXT_PUBLIC_INSFORGE_URL ?? "https://example.ap-southeast.insforge.app",
-  INSFORGE_ANON_KEY: process.env.INSFORGE_ANON_KEY ?? "dev-anon-key",
+    process.env.NEXT_PUBLIC_INSFORGE_URL ??
+    (isProduction ? undefined : "https://example.ap-southeast.insforge.app"),
+  INSFORGE_ANON_KEY: process.env.INSFORGE_ANON_KEY ?? (isProduction ? undefined : "dev-anon-key"),
   INSFORGE_SERVICE_KEY: process.env.INSFORGE_SERVICE_KEY,
   WAHA_BASE_URL: process.env.WAHA_BASE_URL,
   WAHA_API_KEY: process.env.WAHA_API_KEY,
@@ -27,6 +29,5 @@ export const env = envSchema.parse({
   WAHA_WEBHOOK_URL: process.env.WAHA_WEBHOOK_URL,
   WAHA_WEBHOOK_SECRET: process.env.WAHA_WEBHOOK_SECRET,
   WAHA_INTERNAL_ADMIN_EMAILS: process.env.WAHA_INTERNAL_ADMIN_EMAILS,
-  RECEIPT_AI_MODEL: process.env.RECEIPT_AI_MODEL,
   REMINDER_WEBHOOK_SECRET: process.env.REMINDER_WEBHOOK_SECRET
 });

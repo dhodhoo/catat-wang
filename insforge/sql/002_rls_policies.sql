@@ -1,7 +1,6 @@
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE receipt_attachments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE message_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE whatsapp_link_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE transaction_audits ENABLE ROW LEVEL SECURITY;
@@ -18,11 +17,6 @@ CREATE POLICY "categories_owner_all" ON categories
   WITH CHECK (user_id = (SELECT auth.uid()));
 
 CREATE POLICY "transactions_owner_all" ON transactions
-  FOR ALL
-  USING (user_id = (SELECT auth.uid()))
-  WITH CHECK (user_id = (SELECT auth.uid()));
-
-CREATE POLICY "receipt_attachments_owner_all" ON receipt_attachments
   FOR ALL
   USING (user_id = (SELECT auth.uid()))
   WITH CHECK (user_id = (SELECT auth.uid()));

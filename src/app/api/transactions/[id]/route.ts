@@ -13,7 +13,7 @@ export async function GET(_: Request, context: { params: Promise<{ id: string }>
     const client = createInsforgeServerClient(accessToken);
     const { data, error } = await client.database
       .from("transactions")
-      .select("*, categories(name), receipt_attachments(*)")
+      .select("*, categories(name)")
       .eq("user_id", user.id)
       .eq("id", id)
       .maybeSingle();
