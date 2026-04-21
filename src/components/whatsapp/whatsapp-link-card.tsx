@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { KeyRound, Phone, Send } from "lucide-react";
+import { KeyRound } from "lucide-react";
 
 function toWaMeNumber(phone?: string | null) {
   return (phone ?? "").replace(/[^\d]/g, "");
@@ -51,37 +51,15 @@ export function WhatsAppLinkCard({
 
   return (
     <div className="surface-card p-6 sm:p-7">
-      <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+      <div className="space-y-5">
         <div>
           <p className="eyebrow">Verifikasi nomor</p>
-          <h2 className="mt-3 text-3xl text-ink">Hubungkan nomor pribadi Anda ke workspace ini.</h2>
-          <p className="mt-3 max-w-xl text-sm leading-7 text-slate-600 sm:text-base">
+          <h2 className="panel-title">Hubungkan nomor pribadi Anda ke workspace ini.</h2>
+          <p className="panel-copy">
             {canManageWaha
-              ? "Setelah sesi WhatsApp aktif, masukkan nomor Anda untuk mendapatkan kode verifikasi yang akan menghubungkan chat dengan akun CatatWang."
+              ? "Masukkan nomor Anda untuk mendapatkan kode verifikasi dan hubungkan chat dengan akun CatatWang."
               : "Masukkan nomor Anda untuk mendapatkan kode verifikasi, lalu kirim kode itu ke bot WhatsApp yang dibagikan admin workspace."}
           </p>
-
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <article className="surface-muted p-4">
-              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-moss shadow-sm">
-                <Phone className="h-5 w-5" />
-              </span>
-              <p className="mt-5 text-sm text-slate-500">{canManageWaha ? "Nomor bot aktif" : "Akses bot"}</p>
-              <p className="mt-2 text-xl text-ink">
-                {botNumber ? botNumber : canManageWaha ? "Belum terdeteksi" : "Belum tersedia"}
-              </p>
-            </article>
-
-            <article className="surface-muted p-4">
-              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-coral shadow-sm">
-                <Send className="h-5 w-5" />
-              </span>
-              <p className="mt-5 text-sm text-slate-500">Langkah berikutnya</p>
-              <p className="mt-2 text-xl text-ink">
-                {botNumber ? "Klik tombol kirim otomatis setelah kode muncul." : "Nomor bot belum tersedia, hubungi admin workspace."}
-              </p>
-            </article>
-          </div>
         </div>
 
         <div className="surface-muted p-5">

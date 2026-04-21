@@ -23,10 +23,7 @@ export default async function ReportsPage() {
   const initialReports = (reports ?? []) as MonthlyReport[];
 
   return (
-    <DashboardShell 
-      title="Laporan Finansial" 
-      subtitle="Analisis performa keuangan bulanan Anda berdasarkan data historis."
-    >
+    <DashboardShell title="Laporan">
       <ReportsView initialReports={initialReports} />
     </DashboardShell>
   );

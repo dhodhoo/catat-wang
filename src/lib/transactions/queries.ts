@@ -1,5 +1,6 @@
 import { startOfMonth, subDays } from "date-fns";
 import { createInsforgeServerClient } from "@/lib/insforge/server";
+import { extractRelationName } from "@/lib/utils/db";
 import type { CashflowBucket, DashboardSummary } from "@/types/domain";
 
 export async function getDashboardSummary(accessToken: string, userId: string): Promise<DashboardSummary> {
@@ -65,4 +66,73 @@ export async function getCashflowSeries(accessToken: string, userId: string): Pr
   }
 
   return Array.from(buckets.values());
+}
+
+export interface DashboardRecentTransaction {
+  id: string;
+  amount: number;
+  type: "income" | "expense";
+  transactionDate: string;
+  note: string | null;
+  categoryName: string;
+}
+
+export interface DashboardTopExpenseCategory {
+  name: string;
+  total: number;
+}
+
+export async function getDashboardRecentTransactions(
+  accessToken: string,
+  userId: string,
+  limit = 5
+): Promise<DashboardRecentTransaction[]> {
+  const client = createInsforgeServerClient(accessToken);
+  const { data, error } = await client.database
+    .from("transactions")
+    .select("id, amount, type, transaction_date, note, categories(name)")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data ?? []).map((row: any) => ({
+    id: row.id,
+    amount: row.amount,
+    type: row.type,
+    transactionDate: row.transaction_date,
+    note: row.note,
+    categoryName: extractRelationName(row.categories) ?? "Lainnya"
+  }));
+}
+
+export async function getDashboardTopExpenseCategories(
+  accessToken: string,
+  userId: string,
+  limit = 4
+): Promise<DashboardTopExpenseCategory[]> {
+  const client = createInsforgeServerClient(accessToken);
+  const { data, error } = await client.database
+    .from("transactions")
+    .select("amount, categories(name)")
+    .eq("user_id", userId)
+    .eq("type", "expense");
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const aggregate = new Map<string, number>();
+  for (const row of data ?? []) {
+    const name = extractRelationName(row.categories) ?? "Lainnya";
+    aggregate.set(name, (aggregate.get(name) ?? 0) + row.amount);
+  }
+
+  return Array.from(aggregate.entries())
+    .map(([name, total]) => ({ name, total }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, limit);
 }

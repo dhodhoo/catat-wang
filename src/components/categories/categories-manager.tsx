@@ -19,6 +19,7 @@ export function CategoriesManager({ initialCategories }: { initialCategories: Ca
   const [type, setType] = useState<"income" | "expense">("expense");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<CategoryItem | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -82,7 +83,6 @@ export function CategoriesManager({ initialCategories }: { initialCategories: Ca
   }
 
   async function handleArchive(category: CategoryItem) {
-    if (!window.confirm(`Hapus kategori "${category.name}"?`)) return;
     try {
       setIsSaving(true);
       setMessage(null);
@@ -108,26 +108,12 @@ export function CategoriesManager({ initialCategories }: { initialCategories: Ca
         <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
           <div className="space-y-4">
             <p className="eyebrow">Master kategori</p>
-            <h2 className="text-3xl text-ink">Kelompokkan pemasukan dan pengeluaran agar pencatatan terasa lebih tertib.</h2>
-            <p className="max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+            <h2 className="panel-title">Kelompokkan pemasukan dan pengeluaran agar pencatatan terasa lebih tertib.</h2>
+            <p className="panel-copy max-w-2xl">
               Kategori yang rapi membantu sistem membaca transaksi lebih akurat, sekaligus membuat laporan bulanan
               lebih mudah dipahami.
             </p>
-
-            <div className="grid gap-4 sm:grid-cols-3">
-              <article className="surface-muted p-4">
-                <p className="eyebrow">Total aktif</p>
-                <p className="mt-4 text-3xl text-ink">{activeCategories.length}</p>
-              </article>
-              <article className="surface-muted p-4">
-                <p className="eyebrow">Pemasukan</p>
-                <p className="mt-4 text-3xl text-moss">{groupedCategories.income.length}</p>
-              </article>
-              <article className="surface-muted p-4">
-                <p className="eyebrow">Pengeluaran</p>
-                <p className="mt-4 text-3xl text-coral">{groupedCategories.expense.length}</p>
-              </article>
-            </div>
+            <p className="text-sm text-slate-500">{activeCategories.length} kategori aktif.</p>
           </div>
 
           <div className="surface-muted p-5">
@@ -188,8 +174,8 @@ export function CategoriesManager({ initialCategories }: { initialCategories: Ca
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="eyebrow">{group.title}</p>
-                  <h3 className="mt-3 text-3xl text-ink">{group.items.length} kategori aktif</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{group.description}</p>
+                  <h3 className="panel-title">{group.items.length} kategori aktif</h3>
+                  <p className="panel-copy">{group.description}</p>
                 </div>
                 <span className={`flex h-12 w-12 items-center justify-center rounded-full bg-white ${group.accent}`}>
                   <Icon className="h-5 w-5" />
@@ -250,7 +236,7 @@ export function CategoriesManager({ initialCategories }: { initialCategories: Ca
                                   Edit
                                 </button>
                                 {!category.is_default && (
-                                  <button className="button-danger gap-2" onClick={() => void handleArchive(category)}>
+                                  <button className="button-danger gap-2" onClick={() => setDeleteTarget(category)}>
                                     <Trash2 className="h-4 w-4" />
                                     Hapus
                                   </button>
@@ -268,6 +254,45 @@ export function CategoriesManager({ initialCategories }: { initialCategories: Ca
           );
         })}
       </div>
+
+      {deleteTarget ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(16,24,40,0.38)] p-4 backdrop-blur-sm">
+          <div className="surface-panel w-full max-w-lg p-6 sm:p-8">
+            <p className="eyebrow">Konfirmasi hapus</p>
+            <h2 className="mt-2 text-2xl text-ink">Hapus kategori ini?</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              Tindakan ini tidak bisa dibatalkan. Kategori akan diarsipkan dari daftar aktif.
+            </p>
+
+            <div className="mt-4 rounded-xl border border-[#e7e5e4] bg-[#fafaf9] p-4">
+              <p className="text-sm text-slate-500">Nama kategori</p>
+              <p className="mt-1 text-base font-semibold text-ink">{deleteTarget.name}</p>
+              <p className="mt-1 text-sm text-slate-500">
+                {deleteTarget.type === "income" ? "Pemasukan" : "Pengeluaran"}
+              </p>
+            </div>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <button
+                className="button-danger flex-1 justify-center"
+                disabled={isSaving}
+                onClick={() => {
+                  void handleArchive(deleteTarget).finally(() => setDeleteTarget(null));
+                }}
+              >
+                {isSaving ? "Menghapus..." : "Ya, hapus kategori"}
+              </button>
+              <button
+                className="button-secondary justify-center"
+                disabled={isSaving}
+                onClick={() => setDeleteTarget(null)}
+              >
+                Batal
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

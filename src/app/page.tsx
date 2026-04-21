@@ -1,5 +1,11 @@
 import Link from "next/link";
-import { ArrowRight, ChartNoAxesCombined, MessageCircleMore, ShieldCheck, Wallet } from "lucide-react";
+import Image from "next/image";
+import {
+  ArrowRight,
+  ChartNoAxesCombined,
+  MessageCircleMore,
+  ShieldCheck,
+} from "lucide-react";
 
 export default function HomePage() {
   return (
@@ -10,12 +16,18 @@ export default function HomePage() {
       <div className="relative mx-auto max-w-7xl px-6 py-6">
         <header className="flex flex-wrap items-center justify-between gap-4 py-4">
           <div className="flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-moss text-white shadow-card">
-              <Wallet className="h-5 w-5" />
-            </span>
+            <Image
+              alt="CatatWang logo"
+              className="h-11 w-11 object-contain"
+              height={44}
+              src="/logo.png"
+              width={44}
+            />
             <div>
               <p className="eyebrow">CatatWang</p>
-              <p className="text-sm text-slate-600">WhatsApp-first personal finance tracker</p>
+              <p className="text-sm text-slate-600">
+                WhatsApp-first personal finance tracker
+              </p>
             </div>
           </div>
 
@@ -36,11 +48,15 @@ export default function HomePage() {
                 <span className="h-2 w-2 rounded-full bg-coral" />
                 Dibuat untuk ritme harian
               </span>
-              <span className="stat-chip">Lebih nyaman dibuka di mobile maupun desktop</span>
+              <span className="stat-chip">
+                Lebih nyaman dibuka di mobile maupun desktop
+              </span>
             </div>
 
             <div className="space-y-5">
-              <p className="eyebrow">Catat uang tanpa memaksa Anda belajar aplikasi rumit</p>
+              <p className="eyebrow">
+                Catat uang tanpa memaksa Anda belajar aplikasi rumit
+              </p>
               <h1 className="text-5xl leading-none text-ink sm:text-6xl lg:text-7xl">
                 Chat masuk,
                 <br />
@@ -49,31 +65,52 @@ export default function HomePage() {
                 keputusan lebih tenang.
               </h1>
               <p className="max-w-2xl text-lg leading-8 text-slate-600">
-                CatatWang mengubah pesan WhatsApp menjadi transaksi yang tertata, dashboard yang mudah dibaca,
-                dan laporan bulanan yang enak ditinjau kapan saja.
+                CatatWang mengubah pesan WhatsApp menjadi transaksi yang
+                tertata, dashboard yang mudah dibaca, dan laporan bulanan yang
+                enak ditinjau kapan saja.
               </p>
             </div>
 
             <div className="flex flex-wrap gap-4">
-              <Link className="button-primary gap-2 px-6 py-4 text-base" href="/sign-up">
+              <Link
+                className="button-primary gap-2 px-6 py-4 text-base"
+                href="/sign-up"
+              >
                 Buat akun gratis
                 <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link className="button-secondary gap-2 px-6 py-4 text-base" href="/sign-in">
+              <Link
+                className="button-secondary gap-2 px-6 py-4 text-base"
+                href="/sign-in"
+              >
                 Lihat dashboard
               </Link>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-3">
               {[
-                { label: "Input natural", value: "WA", description: "Tulis transaksi seperti biasa lewat chat." },
-                { label: "Review cepat", value: "<1 mnt", description: "Cek transaksi yang perlu perhatian." },
-                { label: "Laporan bulanan", value: "1 klik", description: "Ringkasan siap ditinjau kapan saja." }
+                {
+                  label: "Input natural",
+                  value: "WA",
+                  description: "Tulis transaksi seperti biasa lewat chat.",
+                },
+                {
+                  label: "Review cepat",
+                  value: "<1 mnt",
+                  description: "Cek transaksi yang perlu perhatian.",
+                },
+                {
+                  label: "Laporan bulanan",
+                  value: "1 klik",
+                  description: "Ringkasan siap ditinjau kapan saja.",
+                },
               ].map((item) => (
                 <article key={item.label} className="surface-muted p-5">
                   <p className="eyebrow">{item.label}</p>
                   <p className="mt-4 text-3xl text-ink">{item.value}</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{item.description}</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {item.description}
+                  </p>
                 </article>
               ))}
             </div>
@@ -85,7 +122,9 @@ export default function HomePage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="eyebrow">Simulasi chat</p>
-                    <h2 className="mt-2 text-2xl text-ink">Pencatatan terasa natural</h2>
+                    <h2 className="mt-2 text-2xl text-ink">
+                      Pencatatan terasa natural
+                    </h2>
                   </div>
                   <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-moss shadow-sm">
                     <MessageCircleMore className="h-5 w-5" />
@@ -97,14 +136,18 @@ export default function HomePage() {
                     makan siang 38 ribu di warteg
                   </div>
                   <div className="ml-auto max-w-[86%] rounded-[1.35rem] rounded-tr-md bg-moss px-4 py-3 text-sm text-white shadow-sm">
-                    Tercatat sebagai pengeluaran makan: <strong>Rp38.000</strong>
-                    <div className="mt-2 text-xs text-white/70">Kategori tersimpan otomatis, siap direview.</div>
+                    Tercatat sebagai pengeluaran makan:{" "}
+                    <strong>Rp38.000</strong>
+                    <div className="mt-2 text-xs text-white/70">
+                      Kategori tersimpan otomatis, siap direview.
+                    </div>
                   </div>
                   <div className="max-w-[82%] rounded-[1.35rem] rounded-tl-md bg-white px-4 py-3 text-sm text-slate-700 shadow-sm">
                     gaji bulan april 8 juta
                   </div>
                   <div className="ml-auto max-w-[86%] rounded-[1.35rem] rounded-tr-md bg-coral px-4 py-3 text-sm text-white shadow-sm">
-                    Pemasukan masuk ke laporan bulan ini: <strong>Rp8.000.000</strong>
+                    Pemasukan masuk ke laporan bulan ini:{" "}
+                    <strong>Rp8.000.000</strong>
                   </div>
                 </div>
               </section>
@@ -114,7 +157,9 @@ export default function HomePage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="eyebrow">Snapshot hari ini</p>
-                      <h2 className="mt-2 text-2xl text-ink">Arus kas terkini</h2>
+                      <h2 className="mt-2 text-2xl text-ink">
+                        Arus kas terkini
+                      </h2>
                     </div>
                     <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff6ea] text-coral">
                       <ChartNoAxesCombined className="h-5 w-5" />
@@ -123,13 +168,34 @@ export default function HomePage() {
 
                   <div className="mt-6 space-y-3">
                     {[
-                      { label: "Pemasukan", value: "Rp8.500.000", accent: "text-moss" },
-                      { label: "Pengeluaran", value: "Rp2.140.000", accent: "text-coral" },
-                      { label: "Sisa aman", value: "Rp6.360.000", accent: "text-ink" }
+                      {
+                        label: "Pemasukan",
+                        value: "Rp8.500.000",
+                        accent: "text-moss",
+                      },
+                      {
+                        label: "Pengeluaran",
+                        value: "Rp2.140.000",
+                        accent: "text-coral",
+                      },
+                      {
+                        label: "Sisa aman",
+                        value: "Rp6.360.000",
+                        accent: "text-ink",
+                      },
                     ].map((item) => (
-                      <div key={item.label} className="flex items-center justify-between rounded-2xl bg-[#fffaf3] px-4 py-3">
-                        <span className="text-sm text-slate-500">{item.label}</span>
-                        <span className={`text-base font-semibold ${item.accent}`}>{item.value}</span>
+                      <div
+                        key={item.label}
+                        className="flex items-center justify-between rounded-2xl bg-[#fffaf3] px-4 py-3"
+                      >
+                        <span className="text-sm text-slate-500">
+                          {item.label}
+                        </span>
+                        <span
+                          className={`text-base font-semibold ${item.accent}`}
+                        >
+                          {item.value}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -142,13 +208,24 @@ export default function HomePage() {
                     </span>
                     <div>
                       <p className="eyebrow">Kenapa terasa nyaman</p>
-                      <h2 className="mt-2 text-xl text-ink">Semua angka penting muncul lebih dulu</h2>
+                      <h2 className="mt-2 text-xl text-ink">
+                        Semua angka penting muncul lebih dulu
+                      </h2>
                     </div>
                   </div>
                   <ul className="mt-5 space-y-3 text-sm leading-6 text-slate-600">
-                    <li>Prioritas visual jelas, jadi Anda tidak perlu menebak angka mana yang harus dilihat.</li>
-                    <li>Tabel dan kartu transaksi tetap mudah dipakai di layar kecil.</li>
-                    <li>Alur koneksi WhatsApp dibikin lebih bertahap dan gampang diikuti.</li>
+                    <li>
+                      Prioritas visual jelas, jadi Anda tidak perlu menebak
+                      angka mana yang harus dilihat.
+                    </li>
+                    <li>
+                      Tabel dan kartu transaksi tetap mudah dipakai di layar
+                      kecil.
+                    </li>
+                    <li>
+                      Alur koneksi WhatsApp dibikin lebih bertahap dan gampang
+                      diikuti.
+                    </li>
                   </ul>
                 </div>
               </section>
@@ -160,21 +237,26 @@ export default function HomePage() {
           {[
             {
               title: "1. Hubungkan WhatsApp",
-              description: "Aktifkan sesi, scan QR, lalu verifikasi nomor Anda supaya chat bisa dikenali."
+              description:
+                "Aktifkan sesi, scan QR, lalu verifikasi nomor Anda supaya chat bisa dikenali.",
             },
             {
               title: "2. Catat seperti biasa",
-              description: "Tulis pemasukan atau pengeluaran dengan bahasa natural, sistem bantu menstrukturkan."
+              description:
+                "Tulis pemasukan atau pengeluaran dengan bahasa natural, sistem bantu menstrukturkan.",
             },
             {
               title: "3. Tinjau dan perbaiki",
-              description: "Periksa transaksi, edit bila perlu, lalu nikmati laporan bulanan yang lebih rapi."
-            }
+              description:
+                "Periksa transaksi, edit bila perlu, lalu nikmati laporan bulanan yang lebih rapi.",
+            },
           ].map((item) => (
             <article key={item.title} className="surface-card p-6">
               <p className="eyebrow">Alur penggunaan</p>
               <h2 className="mt-4 text-2xl text-ink">{item.title}</h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600">{item.description}</p>
+              <p className="mt-3 text-sm leading-7 text-slate-600">
+                {item.description}
+              </p>
             </article>
           ))}
         </section>

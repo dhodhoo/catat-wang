@@ -27,8 +27,8 @@ export default async function TransactionDetailPage({
   }
 
   return (
-    <DashboardShell title="Detail transaksi" subtitle="Lihat sumber input, nominal, dan kategori transaksi.">
-      <div className="rounded-[1.75rem] bg-white p-6 shadow-card">
+    <DashboardShell title="Detail transaksi">
+      <div className="surface-card p-6">
         <dl className="grid gap-4 md:grid-cols-2">
           <div>
             <dt className="text-sm text-slate-500">Nominal</dt>

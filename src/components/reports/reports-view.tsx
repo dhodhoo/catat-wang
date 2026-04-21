@@ -9,7 +9,7 @@ import {
   DocumentChartBarIcon,
 } from "@heroicons/react/24/outline";
 import { Trash2 } from "lucide-react";
-import { formatCurrency } from "@/lib/utils/format";
+import { formatCurrency, formatCurrencyCompact } from "@/lib/utils/format";
 import type { MonthlyReport } from "@/types/domain";
 
 const months = [
@@ -32,6 +32,7 @@ export function ReportsView({
 }: {
   initialReports: MonthlyReport[];
 }) {
+  const numericClass = "whitespace-nowrap tabular-nums leading-tight";
   const router = useRouter();
   const [reports, setReports] = useState(initialReports);
   const [selectedReport, setSelectedReport] = useState<MonthlyReport | null>(
@@ -41,18 +42,12 @@ export function ReportsView({
   const [isDownloading, setIsDownloading] = useState(false);
   const [isDeleting, startDeleteTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<MonthlyReport | null>(null);
 
   const selectedMonthLabel = useMemo(() => {
     if (!selectedReport) return "";
     const date = new Date(selectedReport.month_year);
     return `${months[date.getMonth()].label} ${date.getFullYear()}`;
-  }, [selectedReport]);
-
-  const largestCategory = useMemo(() => {
-    if (!selectedReport?.top_categories.length) return null;
-    return [...selectedReport.top_categories].sort(
-      (a, b) => b.amount - a.amount,
-    )[0];
   }, [selectedReport]);
 
   async function generateReport() {
@@ -87,17 +82,6 @@ export function ReportsView({
   }
 
   function deleteReport(report: MonthlyReport) {
-    const date = new Date(report.month_year);
-    const reportLabel = `${months[date.getMonth()].label} ${date.getFullYear()}`;
-
-    if (
-      !window.confirm(
-        `Hapus laporan ${reportLabel}? Tindakan ini tidak bisa dibatalkan.`,
-      )
-    ) {
-      return;
-    }
-
     setError(null);
 
     startDeleteTransition(async () => {
@@ -150,23 +134,41 @@ export function ReportsView({
     }
   }
 
+  function renderResponsiveCurrency(amount: number, withSign?: "+" | "-") {
+    const displayAmount = withSign ? Math.abs(amount) : amount;
+    const prefix = withSign ?? "";
+
+    return (
+      <>
+        <span className="sm:hidden">
+          {prefix}
+          {formatCurrencyCompact(displayAmount)}
+        </span>
+        <span className="hidden sm:inline">
+          {prefix}
+          {formatCurrency(displayAmount)}
+        </span>
+      </>
+    );
+  }
+
   return (
-    <div className="grid gap-6 xl:grid-cols-[0.96fr_1.04fr]">
+    <div className="grid gap-6 xl:grid-cols-[0.78fr_1.22fr]">
       <aside className="space-y-6">
         <section className="surface-panel p-5 sm:p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="eyebrow">Arsip laporan</p>
-              <h2 className="mt-3 text-3xl text-ink">
+              <h2 className="mt-2 text-2xl text-ink sm:text-3xl">
                 {reports.length} laporan tersimpan
               </h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
+              <p className="panel-copy">
                 Simpan histori bulanan supaya perubahan pola pengeluaran lebih
                 mudah dibandingkan.
               </p>
             </div>
             <button
-              className="button-primary gap-2"
+              className="button-primary gap-2 px-4 py-2.5"
               disabled={isGenerating}
               onClick={generateReport}
               type="button"
@@ -178,32 +180,13 @@ export function ReportsView({
             </button>
           </div>
 
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <article className="surface-muted p-4">
-              <p className="eyebrow">Laporan terbaru</p>
-              <p className="mt-4 text-2xl text-ink">
-                {reports[0]
-                  ? `${months[new Date(reports[0].month_year).getMonth()].label} ${new Date(reports[0].month_year).getFullYear()}`
-                  : "-"}
-              </p>
-            </article>
-            <article className="surface-muted p-4">
-              <p className="eyebrow">Total transaksi</p>
-              <p className="mt-4 text-2xl text-ink">
-                {reports.reduce(
-                  (total, report) => total + report.transaction_count,
-                  0,
-                )}
-              </p>
-            </article>
-          </div>
         </section>
 
-        <section className="surface-card p-5 sm:p-6">
+        <section className="surface-card p-4 sm:p-5">
           <div className="mb-4 flex items-center justify-between">
             <div>
               <p className="eyebrow">Pilih periode</p>
-              <h3 className="mt-2 text-2xl text-ink">Riwayat bulan ke bulan</h3>
+              <h3 className="mt-2 text-xl text-ink sm:text-2xl">Riwayat bulan ke bulan</h3>
             </div>
             <DocumentChartBarIcon className="h-5 w-5 text-moss/70" />
           </div>
@@ -223,7 +206,7 @@ export function ReportsView({
                 return (
                   <button
                     key={report.id}
-                    className={`w-full rounded-[1.5rem] border p-4 text-left transition ${
+                    className={`w-full rounded-[1.2rem] border p-3.5 text-left transition ${
                       isSelected
                         ? "border-moss/20 bg-moss text-white shadow-[0_18px_30px_rgba(53,89,74,0.18)]"
                         : "border-[#e1d7c7] bg-[#fff9ef] hover:border-moss/20 hover:bg-white"
@@ -237,7 +220,7 @@ export function ReportsView({
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <p
-                          className={`text-lg ${isSelected ? "text-white" : "text-ink"}`}
+                          className={`text-base sm:text-lg ${isSelected ? "text-white" : "text-ink"}`}
                         >
                           {monthLabel} {yearLabel}
                         </p>
@@ -248,28 +231,28 @@ export function ReportsView({
                         </p>
                       </div>
                       <span
-                        className={`rounded-full px-3 py-1 text-xs ${
+                        className={`rounded-full px-3 py-1 text-xs ${numericClass} ${
                           isSelected
                             ? "bg-white/12 text-white"
                             : "bg-white text-slate-600"
                         }`}
                       >
-                        {formatCurrency(report.net_cashflow)}
+                        {renderResponsiveCurrency(report.net_cashflow)}
                       </span>
                     </div>
 
-                    <div className="mt-4 flex items-center justify-between text-sm">
+                    <div className="mt-4 flex items-center justify-between gap-3 text-sm">
                       <span
-                        className={
+                        className={`${numericClass} ${
                           isSelected ? "text-emerald-100" : "text-moss"
-                        }
+                        }`}
                       >
-                        +{formatCurrency(report.total_income)}
+                        {renderResponsiveCurrency(report.total_income, "+")}
                       </span>
                       <span
-                        className={isSelected ? "text-rose-100" : "text-coral"}
+                        className={`${numericClass} ${isSelected ? "text-rose-100" : "text-coral"}`}
                       >
-                        -{formatCurrency(report.total_expense)}
+                        {renderResponsiveCurrency(report.total_expense, "-")}
                       </span>
                     </div>
                   </button>
@@ -287,10 +270,10 @@ export function ReportsView({
               <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
                 <div>
                   <p className="eyebrow">Laporan aktif</p>
-                  <h2 className="mt-3 text-4xl text-ink">
+                  <h2 className="panel-title-lg">
                     {selectedMonthLabel}
                   </h2>
-                  <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+                  <p className="panel-copy max-w-2xl">
                     Ringkasan bulan ini menempatkan arus kas, volume transaksi,
                     dan kategori dominan dalam satu area yang lebih mudah
                     dibaca.
@@ -316,17 +299,17 @@ export function ReportsView({
                 {[
                   {
                     label: "Pemasukan",
-                    value: formatCurrency(selectedReport.total_income),
+                    value: selectedReport.total_income,
                     tone: "text-moss",
                   },
                   {
                     label: "Pengeluaran",
-                    value: formatCurrency(selectedReport.total_expense),
+                    value: selectedReport.total_expense,
                     tone: "text-coral",
                   },
                   {
                     label: "Selisih bersih",
-                    value: formatCurrency(selectedReport.net_cashflow),
+                    value: selectedReport.net_cashflow,
                     tone:
                       selectedReport.net_cashflow >= 0
                         ? "text-ink"
@@ -338,7 +321,9 @@ export function ReportsView({
                     className="surface-muted overflow-hidden p-5"
                   >
                     <p className="eyebrow">{item.label}</p>
-                    <p className={`mt-5 text-2xl ${item.tone}`}>{item.value}</p>
+                    <p className={`mt-5 text-[clamp(1.05rem,3.6vw,1.5rem)] ${numericClass} ${item.tone}`}>
+                      {renderResponsiveCurrency(item.value)}
+                    </p>
                   </article>
                 ))}
               </div>
@@ -350,7 +335,7 @@ export function ReportsView({
               ) : null}
             </section>
 
-            <section className="grid gap-6 xl:grid-cols-[1fr_0.8fr]">
+            <section>
               <div className="surface-card p-5 sm:p-6">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div>
@@ -359,9 +344,9 @@ export function ReportsView({
                       Kategori paling dominan bulan ini
                     </h3>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-2">
                     <button
-                      className="button-primary gap-2 px-4 py-2"
+                      className="button-primary gap-2 px-4 py-2.5"
                       disabled={isDownloading}
                       onClick={() => downloadReportPdf(selectedReport)}
                       type="button"
@@ -370,15 +355,15 @@ export function ReportsView({
                       {isDownloading ? "Menyiapkan PDF..." : "Download PDF"}
                     </button>
                     <button
-                      className="button-danger gap-2 px-4 py-2"
+                      className="button-danger gap-2 px-4 py-2.5"
                       disabled={isDeleting}
-                      onClick={() => deleteReport(selectedReport)}
+                      onClick={() => setDeleteTarget(selectedReport)}
                       type="button"
                     >
                       <Trash2 className="h-4 w-4" />
                       {isDeleting ? "Menghapus..." : "Hapus laporan"}
                     </button>
-                    <ChartBarIcon className="h-6 w-6 text-moss/70" />
+                    <ChartBarIcon className="hidden h-6 w-6 text-moss/70 sm:block" />
                   </div>
                 </div>
 
@@ -397,8 +382,8 @@ export function ReportsView({
                           <span className="font-medium text-ink">
                             {cat.name}
                           </span>
-                          <span className="text-slate-500">
-                            {formatCurrency(cat.amount)} (
+                          <span className={`text-right text-slate-500 ${numericClass}`}>
+                            {renderResponsiveCurrency(cat.amount)} (
                             {cat.percentage.toFixed(1)}%)
                           </span>
                         </div>
@@ -412,33 +397,6 @@ export function ReportsView({
                     ))
                   )}
                 </div>
-              </div>
-
-              <div className="space-y-6">
-                <section className="surface-card p-5 sm:p-6">
-                  <p className="eyebrow">Highlight periode</p>
-                  <h3 className="mt-3 text-3xl text-ink">
-                    {selectedReport.transaction_count} transaksi tercatat
-                  </h3>
-                  <p className="mt-3 text-sm leading-7 text-slate-600">
-                    Volume transaksi ini membantu Anda menilai apakah periode
-                    tersebut aktif atau relatif tenang.
-                  </p>
-                </section>
-
-                <section className="surface-card p-5 sm:p-6">
-                  <p className="eyebrow">Insight cepat</p>
-                  <h3 className="mt-3 text-2xl text-ink">
-                    {largestCategory
-                      ? `${largestCategory.name} jadi pengeluaran paling besar`
-                      : "Belum ada kategori dominan"}
-                  </h3>
-                  <p className="mt-3 text-sm leading-7 text-slate-600">
-                    {largestCategory
-                      ? `${largestCategory.name} menyumbang ${largestCategory.percentage.toFixed(1)}% dari total pengeluaran bulan ini.`
-                      : "Tambahkan lebih banyak transaksi atau kategori agar insight ini terisi otomatis."}
-                  </p>
-                </section>
               </div>
             </section>
           </div>
@@ -455,6 +413,50 @@ export function ReportsView({
           </div>
         )}
       </main>
+
+      {deleteTarget ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(16,24,40,0.38)] p-4 backdrop-blur-sm">
+          <div className="surface-panel w-full max-w-lg p-6 sm:p-8">
+            <p className="eyebrow">Konfirmasi hapus</p>
+            <h2 className="mt-2 text-2xl text-ink">Hapus laporan ini?</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              Tindakan ini tidak bisa dibatalkan. Arsip laporan akan dihapus permanen.
+            </p>
+
+            <div className="mt-4 rounded-xl border border-[#e7e5e4] bg-[#fafaf9] p-4">
+              <p className="text-sm text-slate-500">Periode</p>
+              <p className="mt-1 text-base font-semibold text-ink">
+                {(() => {
+                  const date = new Date(deleteTarget.month_year);
+                  return `${months[date.getMonth()].label} ${date.getFullYear()}`;
+                })()}
+              </p>
+              <p className={`mt-1 text-sm ${numericClass} ${deleteTarget.net_cashflow >= 0 ? "text-moss" : "text-coral"}`}>
+                {renderResponsiveCurrency(deleteTarget.net_cashflow)}
+              </p>
+            </div>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <button
+                className="button-danger flex-1 justify-center"
+                disabled={isDeleting}
+                onClick={() => {
+                  void Promise.resolve(deleteReport(deleteTarget)).finally(() => setDeleteTarget(null));
+                }}
+              >
+                {isDeleting ? "Menghapus..." : "Ya, hapus laporan"}
+              </button>
+              <button
+                className="button-secondary justify-center"
+                disabled={isDeleting}
+                onClick={() => setDeleteTarget(null)}
+              >
+                Batal
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

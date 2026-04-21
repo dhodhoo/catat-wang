@@ -58,11 +58,11 @@ export function VerifyEmailCard({ defaultEmail = "" }: { defaultEmail?: string }
   }
 
   return (
-    <div className="surface-panel w-full max-w-xl p-8 sm:p-10">
+    <div className="surface-panel glow-card w-full max-w-xl overflow-hidden p-8 sm:p-10">
       <div className="mb-8 border-b border-[#e8ddcc] pb-6">
         <p className="eyebrow">Verifikasi email</p>
         <h1 className="mt-3 text-3xl text-ink sm:text-[2.5rem]">Aktifkan akun Anda</h1>
-        <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
+        <p className="mt-3 text-sm text-slate-600 sm:text-base">
           Masukkan email dan kode 6 digit. Jika kode belum masuk, Anda bisa mengirim ulang dari halaman ini.
         </p>
       </div>
@@ -90,7 +90,7 @@ export function VerifyEmailCard({ defaultEmail = "" }: { defaultEmail?: string }
         <label className="block space-y-2">
           <span className="field-label">Kode OTP</span>
           <input
-            className="field-input"
+            className="field-input text-center font-mono text-2xl tracking-[0.34em] sm:text-3xl"
             inputMode="numeric"
             maxLength={6}
             name="otp"
@@ -103,12 +103,12 @@ export function VerifyEmailCard({ defaultEmail = "" }: { defaultEmail?: string }
           />
         </label>
 
-        <button className="button-primary w-full justify-center" disabled={isVerifying} type="submit">
+        <button className="button-primary w-full justify-center py-4 text-base" disabled={isVerifying} type="submit">
           {isVerifying ? "Memverifikasi..." : "Verifikasi"}
         </button>
 
         <button
-          className="button-secondary w-full justify-center"
+          className="button-secondary w-full justify-center py-4 text-base"
           disabled={isResending || !email}
           onClick={() => {
             void resend();
@@ -117,10 +117,6 @@ export function VerifyEmailCard({ defaultEmail = "" }: { defaultEmail?: string }
         >
           {isResending ? "Mengirim ulang..." : "Kirim ulang kode"}
         </button>
-
-        <p className="rounded-[1.25rem] border border-[#ece2d2] bg-[#fffaf1] px-4 py-3 text-sm leading-6 text-slate-500">
-          Jika inbox kosong, cek folder spam, promotions, atau social. Pengiriman email bisa terlambat beberapa menit.
-        </p>
 
         {message ? (
           <p className="rounded-[1.25rem] border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">

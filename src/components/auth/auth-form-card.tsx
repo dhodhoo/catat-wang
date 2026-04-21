@@ -42,7 +42,7 @@ export function AuthFormCard({
       if (!response.ok) {
         setError(data.message ?? "Authentication failed.");
       } else {
-        setMessage(data.status ? `Status: ${data.status}` : "Success.");
+        setMessage(data.status ? `Status: ${data.status}` : "Berhasil.");
         if (data.status === "ok" || data.status === "signed_in" || data.status === "verified") {
           window.location.href = "/dashboard";
         }
@@ -58,16 +58,12 @@ export function AuthFormCard({
 
   return (
     <div className="surface-panel glow-card w-full max-w-xl overflow-hidden p-8 sm:p-10">
-      <div className="mb-8 flex flex-col gap-4 border-b border-[#e8ddcc] pb-6 sm:flex-row sm:items-start sm:justify-between">
+      <div className="mb-8 border-b border-[#e8ddcc] pb-6">
         <div className="space-y-2">
           <p className="eyebrow">Akses akun CatatWang</p>
           <h1 className="text-3xl text-ink sm:text-[2.5rem]">{title}</h1>
-          <p className="max-w-md text-sm leading-7 text-slate-600 sm:text-base">{subtitle}</p>
+          <p className="max-w-md text-sm text-slate-600 sm:text-base">{subtitle}</p>
         </div>
-        <span className="status-chip self-start">
-          <span className="h-2 w-2 rounded-full bg-moss" />
-          Aman dan terenkripsi
-        </span>
       </div>
 
       <form
@@ -80,29 +76,33 @@ export function AuthFormCard({
           void handleSubmit(new FormData(event.currentTarget));
         }}
       >
-        {fields.map((field) => (
-          <label key={field.name} className="block space-y-2">
-            <span className="field-label">{field.label}</span>
-            <input
-              autoComplete={field.type === "password" ? "current-password" : field.name}
-              className="field-input"
-              disabled={isLoading}
-              name={field.name}
-              placeholder={field.placeholder}
-              required
-              type={field.type ?? "text"}
-            />
-          </label>
-        ))}
+        {fields.map((field) => {
+          const isPasswordField = field.type === "password";
+          const autoCompleteValue = isPasswordField
+            ? field.name.toLowerCase().includes("new")
+              ? "new-password"
+              : "current-password"
+            : field.name;
+
+          return (
+            <label key={field.name} className="block space-y-2">
+              <span className="field-label">{field.label}</span>
+              <input
+                autoComplete={autoCompleteValue}
+                className="field-input"
+                disabled={isLoading}
+                name={field.name}
+                placeholder={field.placeholder}
+                required
+                type={field.type ?? "text"}
+              />
+            </label>
+          );
+        })}
 
         <button className="button-primary mt-2 w-full justify-center py-4 text-base" disabled={isLoading} type="submit">
           {isLoading ? "Memproses..." : submitLabel}
         </button>
-
-        <p className="rounded-[1.25rem] border border-[#ece2d2] bg-[#fffaf1] px-4 py-3 text-sm leading-6 text-slate-500">
-          Data transaksi Anda tetap privat. Kami hanya memakai detail yang dibutuhkan untuk mencatat dan
-          menampilkan ringkasan keuangan.
-        </p>
 
         {message && (
           <p className="rounded-[1.25rem] border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">

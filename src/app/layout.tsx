@@ -1,11 +1,6 @@
 import type { Metadata } from "next";
-import { Fraunces, IBM_Plex_Mono, Instrument_Sans } from "next/font/google";
+import { IBM_Plex_Mono, Instrument_Sans } from "next/font/google";
 import "./globals.css";
-
-const displayFont = Fraunces({
-  subsets: ["latin"],
-  variable: "--font-display"
-});
 
 const bodyFont = Instrument_Sans({
   subsets: ["latin"],
@@ -30,7 +25,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id">
-      <body className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable}`}>
+      <body className={`${bodyFont.variable} ${monoFont.variable}`}>
         {children}
       </body>
     </html>

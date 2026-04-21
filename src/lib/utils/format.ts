@@ -6,6 +6,31 @@ export function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
+export function formatCurrencyCompact(amount: number): string {
+  const absoluteAmount = Math.abs(amount);
+  const sign = amount < 0 ? "-" : "";
+  const compactNumber = new Intl.NumberFormat("id-ID", {
+    maximumFractionDigits: 2
+  });
+
+  if (absoluteAmount >= 1_000_000_000) {
+    return `${sign}Rp${compactNumber.format(absoluteAmount / 1_000_000_000)} M`;
+  }
+
+  if (absoluteAmount >= 1_000_000) {
+    return `${sign}Rp${compactNumber.format(absoluteAmount / 1_000_000)} Jt`;
+  }
+
+  if (absoluteAmount >= 1_000) {
+    return `${sign}Rp${compactNumber.format(absoluteAmount / 1_000)} K`;
+  }
+
+  const integerFormatter = new Intl.NumberFormat("id-ID", {
+    maximumFractionDigits: 0
+  });
+  return `${sign}Rp${integerFormatter.format(absoluteAmount)}`;
+}
+
 export function formatDateLabel(date: string): string {
   return new Intl.DateTimeFormat("id-ID", {
     day: "2-digit",
