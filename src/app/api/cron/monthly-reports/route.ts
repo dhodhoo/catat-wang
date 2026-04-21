@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { createInsforgeAdminClient } from "@/lib/insforge/server";
+import { generateMonthlyReportForUser, getMonthDateRange } from "@/lib/reports/service";
 import { env } from "@/lib/utils/env";
 
 function getPreviousMonthInJakarta() {
@@ -37,9 +38,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const { month, year } = getPreviousMonthInJakarta();
-    const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
-    const lastDay = new Date(year, month, 0).getDate();
-    const endDate = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+    const { startDate, endDate } = getMonthDateRange(year, month);
 
     const client = createInsforgeAdminClient();
     const { data: transactionRows, error: transactionError } = await client.database
@@ -63,23 +62,13 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const functionUrl = `${env.NEXT_PUBLIC_INSFORGE_URL}/functions/generate-monthly-report`;
     const settled = await Promise.allSettled(
       userIds.map(async (userId) => {
-        const response = await fetch(functionUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${env.INSFORGE_SERVICE_KEY}`
-          },
-          body: JSON.stringify({ userId, month, year })
+        await generateMonthlyReportForUser({
+          userId,
+          month,
+          year
         });
-
-        const payload = await response.json().catch(() => ({}));
-
-        if (!response.ok || payload?.success === false || payload?.error) {
-          throw new Error(payload?.error || payload?.message || `HTTP ${response.status}`);
-        }
 
         return { userId };
       })

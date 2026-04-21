@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireCurrentUser } from "@/lib/insforge/auth";
 import { getAccessTokenFromCookies } from "@/lib/insforge/cookies";
 import { createInsforgeServerClient } from "@/lib/insforge/server";
+import { generateMonthlyReportForUser } from "@/lib/reports/service";
 
 export async function GET() {
   try {
@@ -37,53 +38,27 @@ export async function POST(req: Request) {
     }
 
     const { month, year } = await req.json();
+    const parsedMonth = Number(month);
+    const parsedYear = Number(year);
 
-    // Use Service Key for Trusted Server-to-Server invocation
-    const baseUrl = process.env.NEXT_PUBLIC_INSFORGE_URL;
-    const serviceKey = process.env.INSFORGE_SERVICE_KEY;
-    
-    if (!serviceKey) {
-      console.error("INSFORGE_SERVICE_KEY is missing in environment variables!");
-      return NextResponse.json({ message: "Konfigurasi server (Service Key) tidak ditemukan" }, { status: 500 });
+    if (
+      !Number.isInteger(parsedMonth) ||
+      !Number.isInteger(parsedYear) ||
+      parsedMonth < 1 ||
+      parsedMonth > 12 ||
+      parsedYear < 2000
+    ) {
+      return NextResponse.json({ message: "Parameter bulan/tahun tidak valid." }, { status: 400 });
     }
 
-    const functionUrl = `${baseUrl}/functions/generate-monthly-report`;
-    
-    console.log("Securely fetching report function with Service Key for User:", user.id);
-    
-    const response = await fetch(functionUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${serviceKey}` // Trust established via Service Key
-      },
-      body: JSON.stringify({ 
-        userId: user.id, // Trusted ID passed from secure server
-        month, 
-        year 
-      })
+    const data = await generateMonthlyReportForUser({
+      userId: user.id,
+      month: parsedMonth,
+      year: parsedYear
     });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Function fetch error:", response.status, errorText);
-      return NextResponse.json({ 
-        message: `Gagal memicu fungsi (${response.status}): ${errorText.substring(0, 100)}`,
-        status: response.status 
-      }, { status: 500 });
-    }
-
-    const data = await response.json();
-    console.log("Function response data:", data);
-
-    if (data?.error) {
-       console.error("Function business logic error:", data.error);
-       return NextResponse.json({ message: "Gagal generate: " + data.error, details: data }, { status: 500 });
-    }
 
     return NextResponse.json({ success: true, data });
   } catch (error: any) {
-    console.error("API Route error:", error);
     return NextResponse.json({ message: error.message }, { status: 500 });
   }
 }
