@@ -5,6 +5,8 @@ import { CheckCircle2, QrCode, RefreshCw, Unplug } from "lucide-react";
 
 interface SessionState {
   configured: boolean;
+  missingConfig?: string[];
+  webhookSecretConfigured?: boolean;
   sessionName: string;
   webhookUrl: string;
   session: {
@@ -16,6 +18,18 @@ interface SessionState {
     } | null;
   } | null;
   qr: string | null;
+}
+
+interface ApiErrorPayload {
+  message?: string;
+}
+
+async function readJsonSafe<T>(response: Response): Promise<T | null> {
+  try {
+    return (await response.json()) as T;
+  } catch {
+    return null;
+  }
 }
 
 export function WahaSessionCard() {
@@ -33,9 +47,13 @@ export function WahaSessionCard() {
 
   async function load() {
     const response = await fetch("/api/whatsapp/session", { cache: "no-store" });
-    const payload = await response.json();
+    const payload = await readJsonSafe<SessionState & ApiErrorPayload>(response);
     if (!response.ok) {
-      setError("Gagal mengambil status WhatsApp.");
+      setError(payload?.message ?? "Gagal mengambil status WhatsApp.");
+      return;
+    }
+    if (!payload) {
+      setError("Gagal membaca respons status WhatsApp.");
       return;
     }
     setError(null);
@@ -64,14 +82,22 @@ export function WahaSessionCard() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action })
     });
-    const payload = await response.json();
+    const payload = await readJsonSafe<
+      { sessionName?: string; session?: SessionState["session"]; qr?: string | null } & ApiErrorPayload
+    >(response);
     if (!response.ok) {
-      setError("Gagal memproses koneksi WhatsApp.");
+      setError(payload?.message ?? "Gagal memproses koneksi WhatsApp.");
+      return;
+    }
+    if (!payload) {
+      setError("Gagal membaca respons proses koneksi WhatsApp.");
       return;
     }
     setError(null);
     setData((current) => ({
       configured: current?.configured ?? true,
+      missingConfig: current?.missingConfig ?? [],
+      webhookSecretConfigured: current?.webhookSecretConfigured ?? false,
       webhookUrl: current?.webhookUrl ?? "",
       sessionName: payload.sessionName ?? current?.sessionName ?? "default",
       session: payload.session ?? null,
@@ -146,9 +172,10 @@ export function WahaSessionCard() {
         )}
 
         {!data?.configured && (
-          <p className="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-            Konfigurasi API WhatsApp belum lengkap di environment variables.
-          </p>
+          <div className="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+            <p>Konfigurasi API WhatsApp belum lengkap di environment variables.</p>
+            {data?.missingConfig?.length ? <p className="mt-1">Field wajib: {data.missingConfig.join(", ")}</p> : null}
+          </div>
         )}
       </div>
 

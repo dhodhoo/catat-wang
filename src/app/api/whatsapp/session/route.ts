@@ -13,6 +13,17 @@ import { fail, ok } from "@/lib/utils/http";
 const SESSION_POLL_ATTEMPTS = 6;
 const SESSION_POLL_DELAY_MS = 1500;
 
+function getMissingWahaConfigFields() {
+  const missing: string[] = [];
+  if (!env.WAHA_BASE_URL) {
+    missing.push("WAHA_BASE_URL");
+  }
+  if (!env.WAHA_API_KEY) {
+    missing.push("WAHA_API_KEY");
+  }
+  return missing;
+}
+
 function assertWebhookSecretConfigured() {
   if (process.env.NODE_ENV === "production" && !env.WAHA_WEBHOOK_SECRET) {
     throw new Error("WAHA_WEBHOOK_SECRET wajib diisi pada environment production.");
@@ -84,15 +95,30 @@ async function waitForSessionSnapshot() {
 
 export async function GET() {
   try {
-    assertWebhookSecretConfigured();
     const user = await requireCurrentUserApi();
     requireWahaInternalAdminEmail(user.email);
+    const missingConfig = getMissingWahaConfigFields();
+
+    if (missingConfig.length > 0) {
+      return ok({
+        configured: false,
+        missingConfig,
+        sessionName: env.WAHA_SESSION_NAME,
+        webhookUrl: buildWebhookUrl(),
+        webhookSecretConfigured: Boolean(env.WAHA_WEBHOOK_SECRET),
+        session: null,
+        qr: null
+      });
+    }
+
     const { session, qr } = await waitForSessionSnapshot();
 
     return ok({
-      configured: Boolean(env.WAHA_BASE_URL && env.WAHA_API_KEY),
+      configured: true,
+      missingConfig: [],
       sessionName: env.WAHA_SESSION_NAME,
       webhookUrl: buildWebhookUrl(),
+      webhookSecretConfigured: Boolean(env.WAHA_WEBHOOK_SECRET),
       session: session
         ? {
             name: session.name,
@@ -112,6 +138,10 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const missingConfig = getMissingWahaConfigFields();
+    if (missingConfig.length > 0) {
+      throw new Error(`Konfigurasi WAHA belum lengkap: ${missingConfig.join(", ")}.`);
+    }
     assertWebhookSecretConfigured();
     const user = await requireCurrentUserApi();
     requireWahaInternalAdminEmail(user.email);
