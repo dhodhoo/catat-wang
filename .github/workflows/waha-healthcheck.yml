@@ -15,6 +15,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Check WhatsApp provider session status
+        id: healthcheck
+        continue-on-error: true
         env:
           WHATSAPP_PROVIDER: ${{ vars.WHATSAPP_PROVIDER }}
           WAHA_BASE_URL: ${{ vars.WAHA_BASE_URL }}
@@ -114,3 +116,27 @@ PY
           fi
 
           echo "WAHA healthcheck OK"
+
+      - name: Send alert webhook when healthcheck fails
+        if: ${{ steps.healthcheck.outcome == 'failure' }}
+        env:
+          WHATSAPP_ALERT_WEBHOOK_URL: ${{ secrets.WHATSAPP_ALERT_WEBHOOK_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${WHATSAPP_ALERT_WEBHOOK_URL:-}" ]; then
+            echo "WHATSAPP_ALERT_WEBHOOK_URL belum di-set, skip alert webhook."
+            exit 0
+          fi
+
+          MSG="WhatsApp healthcheck FAILED on ${GITHUB_REPOSITORY} (${GITHUB_REF_NAME}) run ${GITHUB_RUN_ID}. Cek workflow logs."
+          curl -sS -X POST \
+            -H "Content-Type: application/json" \
+            -d "{\"text\":\"${MSG}\",\"content\":\"${MSG}\"}" \
+            "${WHATSAPP_ALERT_WEBHOOK_URL}" >/dev/null
+          echo "Alert webhook sent."
+
+      - name: Fail workflow when healthcheck is unhealthy
+        if: ${{ steps.healthcheck.outcome == 'failure' }}
+        run: |
+          echo "WhatsApp healthcheck failed."
+          exit 1

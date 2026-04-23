@@ -25,3 +25,26 @@ npm run start
 Lihat `.env.example`.
 
 Nilai `APP_WEBHOOK_SECRET` harus sama dengan `WAHA_WEBHOOK_SECRET` di app agar verifikasi signature tetap kompatibel (`x-waha-hmac`, SHA-512).
+
+== Backup Auth State
+
+Folder auth penting: `BAILEYS_AUTH_DIR` (default `/home/container/.baileys-auth`).
+
+Script backup:
+
+[source,bash]
+----
+sh /home/container/baileys-bot/scripts/backup-baileys-auth.sh
+----
+
+Script restore:
+
+[source,bash]
+----
+sh /home/container/baileys-bot/scripts/restore-baileys-auth.sh /home/container/backups/baileys-auth/baileys-auth-YYYYMMDD-HHMMSS.tar.gz
+----
+
+Variable opsional backup:
+
+* `BAILEYS_AUTH_BACKUP_DIR` (default `/home/container/backups/baileys-auth`)
+* `BAILEYS_AUTH_BACKUP_RETENTION_DAYS` (default `14`)

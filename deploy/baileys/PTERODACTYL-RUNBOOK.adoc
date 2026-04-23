@@ -91,6 +91,51 @@ Jika status bukan `WORKING`:
 . Scan QR dari `/settings/whatsapp`.
 . Cek log server Pterodactyl dan endpoint `/health`.
 
+== 6.1) Monitoring + Alert (No.4)
+
+. Aktifkan workflow GitHub `WhatsApp Provider Healthcheck` (sudah jalan tiap 5 menit).
+. Tambahkan secret repo untuk alert:
+* `WHATSAPP_ALERT_WEBHOOK_URL=<webhook Slack/Discord/Telegram bridge>`
+. Pastikan vars/secrets provider sudah terisi:
+* `WHATSAPP_PROVIDER`
+* `BAILEYS_BOT_BASE_URL`
+* `BAILEYS_BOT_API_KEY`
+
+Jika healthcheck gagal atau session bukan `WORKING`, workflow akan:
+
+* menandai run sebagai gagal, dan
+* mengirim alert ke `WHATSAPP_ALERT_WEBHOOK_URL` (jika di-set).
+
+== 6.2) Backup Auth Session (No.5)
+
+Jalankan backup auth secara terjadwal agar tidak perlu scan ulang saat recovery.
+
+Script backup:
+
+[source,bash]
+----
+sh /home/container/baileys-bot/scripts/backup-baileys-auth.sh
+----
+
+Script restore:
+
+[source,bash]
+----
+sh /home/container/baileys-bot/scripts/restore-baileys-auth.sh /home/container/backups/baileys-auth/baileys-auth-YYYYMMDD-HHMMSS.tar.gz
+----
+
+Set env opsional di bot `.env`:
+
+* `BAILEYS_AUTH_BACKUP_DIR=/home/container/backups/baileys-auth`
+* `BAILEYS_AUTH_BACKUP_RETENTION_DAYS=14`
+
+Rekomendasi Schedule di Pterodactyl:
+
+. Buat schedule harian jam `02:10` server time.
+. Task command:
+* `sh /home/container/baileys-bot/scripts/backup-baileys-auth.sh`
+. Task cleanup sudah otomatis di script berdasarkan retensi.
+
 == 7) Rotate/Revoke Credential (Wajib)
 
 Urutan rotasi:
