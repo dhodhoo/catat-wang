@@ -301,13 +301,23 @@ export function verifyWhatsAppSignature(rawBody: string, signature: string | nul
     return false;
   }
 
-  const expected = crypto.createHmac("sha512", env.WAHA_WEBHOOK_SECRET).update(rawBody).digest("hex");
+  const candidateSecrets = [env.WAHA_WEBHOOK_SECRET, env.WAHA_WEBHOOK_SECRET_PREVIOUS].filter(
+    (value): value is string => Boolean(value)
+  );
 
-  if (normalizedSignature.length !== expected.length) {
-    return false;
+  for (const secret of candidateSecrets) {
+    const expected = crypto.createHmac("sha512", secret).update(rawBody).digest("hex");
+
+    if (normalizedSignature.length !== expected.length) {
+      continue;
+    }
+
+    if (crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(normalizedSignature))) {
+      return true;
+    }
   }
 
-  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(normalizedSignature));
+  return false;
 }
 
 export async function sendWhatsAppTextMessage(to: string, body: string) {

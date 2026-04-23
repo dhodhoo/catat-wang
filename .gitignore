@@ -55,3 +55,6 @@ tmp-*
 
 # Local migration configs
 scripts/migrate-waha-vps.config.ps1
+
+# Local packaged bot artifacts
+services/baileys-bot.zip

@@ -31,7 +31,6 @@ async function postWebhook(payload) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "X-Api-Key": config.botApiKey,
       "x-waha-hmac": signature
     },
     body: rawBody

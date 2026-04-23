@@ -24,7 +24,22 @@ npm run start
 
 == 2) Set Environment Bot
 
-Wajib:
+Karena egg Node.js mem-prefix command dengan `/usr/local/bin/`, simpan env bot di file runtime:
+
+[source,bash]
+----
+cat > /home/container/baileys-bot/.env <<'EOF'
+PORT=2020
+BOT_API_KEY=<BOT_API_KEY>
+SESSION_NAME=default
+APP_WEBHOOK_URL=https://catat-wang.vercel.app/api/whatsapp/webhook
+APP_WEBHOOK_SECRET=<sama dengan WAHA_WEBHOOK_SECRET app>
+BAILEYS_AUTH_DIR=/home/container/.baileys-auth
+LOG_LEVEL=info
+EOF
+----
+
+Wajib di `.env`:
 
 * `BOT_API_KEY`
 * `APP_WEBHOOK_URL=https://catat-wang.vercel.app/api/whatsapp/webhook`
@@ -32,7 +47,7 @@ Wajib:
 * `SESSION_NAME=default`
 * `BAILEYS_AUTH_DIR=/home/container/.baileys-auth`
 
-Opsional:
+Opsional di `.env`:
 
 * `PORT=3101`
 * `LOG_LEVEL=info`
@@ -75,3 +90,37 @@ Jika status bukan `WORKING`:
 . Hit `POST /session` action `ensure`.
 . Scan QR dari `/settings/whatsapp`.
 . Cek log server Pterodactyl dan endpoint `/health`.
+
+== 7) Rotate/Revoke Credential (Wajib)
+
+Urutan rotasi:
+
+. Revoke `VERCEL_TOKEN` lama, generate token baru.
+. Revoke `Pterodactyl Client API key` lama, generate key baru.
+. Generate `WAHA_WEBHOOK_SECRET` baru.
+.. Simpan secret lama sementara di `WAHA_WEBHOOK_SECRET_PREVIOUS` (Vercel) selama masa transisi.
+. Generate `BAILEYS_BOT_API_KEY` / `BOT_API_KEY` baru.
+. Rotate legacy `WAHA_API_KEY` jika masih aktif dipakai fallback.
+
+Langkah update:
+
+. Update Vercel env production:
+* `WAHA_WEBHOOK_SECRET=<baru>`
+* `WAHA_WEBHOOK_SECRET_PREVIOUS=<lama>` (sementara)
+* `BAILEYS_BOT_API_KEY=<baru>`
+. Update `.env` bot Pterodactyl:
+* `BOT_API_KEY=<baru>`
+* `APP_WEBHOOK_SECRET=<WAHA_WEBHOOK_SECRET baru>`
+. Restart bot Pterodactyl.
+. Redeploy production app Vercel.
+
+Verifikasi pasca-rotasi:
+
+. `GET /health` bot harus 200.
+. Status session bot tetap `WORKING`.
+. Kirim pesan transaksi uji dan pastikan transaksi tersimpan.
+
+Finalisasi setelah 24 jam stabil:
+
+. Hapus `WAHA_WEBHOOK_SECRET_PREVIOUS` dari Vercel.
+. Pastikan webhook dengan secret lama sudah ditolak (`401`).

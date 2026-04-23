@@ -16,6 +16,7 @@ Semua endpoint butuh header `X-Api-Key: <BOT_API_KEY>`.
 [source,bash]
 ----
 npm install
+cp .env.example .env
 npm run start
 ----
 
