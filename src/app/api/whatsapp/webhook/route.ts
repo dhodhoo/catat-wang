@@ -4,6 +4,7 @@ import { parseIncomingTextBatch } from "@/lib/parser/parse-text-transaction";
 
 import { createTransaction, deleteLastTransaction, updateLastTransaction } from "@/lib/transactions/service";
 import { fail, ok } from "@/lib/utils/http";
+import { env } from "@/lib/utils/env";
 
 import {
   getWhatsAppProvider,
@@ -102,12 +103,20 @@ export async function POST(request: Request) {
     return ok({ received: false, ignored: true });
   }
 
+  const provider = getWhatsAppProvider();
+  const apiKeyHeader = request.headers.get("x-api-key");
   const signature =
     request.headers.get("x-webhook-hmac") ??
     request.headers.get("x-hmac-signature") ??
     request.headers.get("x-waha-hmac");
 
-  if (!verifyWhatsAppSignature(rawBody, signature)) {
+  const signatureValid = verifyWhatsAppSignature(rawBody, signature);
+  const baileysApiKeyValid =
+    provider === "baileys" &&
+    Boolean(env.BAILEYS_BOT_API_KEY) &&
+    apiKeyHeader === env.BAILEYS_BOT_API_KEY;
+
+  if (!signatureValid && !baileysApiKeyValid) {
     return fail("Invalid WhatsApp webhook signature.", 401, "unauthorized");
   }
 

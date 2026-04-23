@@ -31,6 +31,7 @@ async function postWebhook(payload) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      "X-Api-Key": config.botApiKey,
       "x-waha-hmac": signature
     },
     body: rawBody
@@ -53,7 +54,7 @@ async function emitSessionStatus() {
       }
     });
   } catch (error) {
-    logger.warn({ error }, "Failed to emit session.status webhook");
+    logger.warn({ message: error?.message ?? String(error) }, "Failed to emit session.status webhook");
   }
 }
 
@@ -177,7 +178,7 @@ async function ensureSession() {
         try {
           await postWebhook(payload);
         } catch (error) {
-          logger.error({ error, payload }, "Failed to forward incoming message webhook");
+          logger.error({ message: error?.message ?? String(error), payload }, "Failed to forward incoming message webhook");
         }
       }
     });
