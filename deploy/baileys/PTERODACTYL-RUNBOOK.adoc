@@ -110,31 +110,25 @@ Jika healthcheck gagal atau session bukan `WORKING`, workflow akan:
 
 Jalankan backup auth secara terjadwal agar tidak perlu scan ulang saat recovery.
 
-Script backup:
+Backup otomatis menggunakan GitHub Workflow `Baileys Auth Backup`:
+
+* Schedule: harian `02:10 WIB` (cron GitHub `10 19 * * *` UTC).
+* Mekanisme: call API Pterodactyl `files/compress` untuk `.baileys-auth`.
+* Retensi: simpan `14` archive terbaru (bisa diubah via `BAILEYS_AUTH_BACKUP_KEEP`).
+
+Set GitHub vars/secrets berikut:
+
+* `PTERODACTYL_BASE_URL=https://panel.xbotzlauncher.site`
+* `PTERODACTYL_SERVER_ID=12f2d726`
+* `BAILEYS_AUTH_BACKUP_KEEP=14` (opsional, default 14)
+* `PTERODACTYL_CLIENT_API_KEY` (secret)
+
+Untuk restore cepat, pakai script ini di server:
 
 [source,bash]
 ----
-sh /home/container/baileys-bot/scripts/backup-baileys-auth.sh
+sh /home/container/baileys-bot/scripts/restore-baileys-auth.sh /path/to/archive-YYYY-MM-DDTHHMMSSZ.tar.gz
 ----
-
-Script restore:
-
-[source,bash]
-----
-sh /home/container/baileys-bot/scripts/restore-baileys-auth.sh /home/container/backups/baileys-auth/baileys-auth-YYYYMMDD-HHMMSS.tar.gz
-----
-
-Set env opsional di bot `.env`:
-
-* `BAILEYS_AUTH_BACKUP_DIR=/home/container/backups/baileys-auth`
-* `BAILEYS_AUTH_BACKUP_RETENTION_DAYS=14`
-
-Rekomendasi Schedule di Pterodactyl:
-
-. Buat schedule harian jam `02:10` server time.
-. Task command:
-* `sh /home/container/baileys-bot/scripts/backup-baileys-auth.sh`
-. Task cleanup sudah otomatis di script berdasarkan retensi.
 
 == 7) Rotate/Revoke Credential (Wajib)
 

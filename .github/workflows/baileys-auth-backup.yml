@@ -1,0 +1,102 @@
+name: Baileys Auth Backup
+
+on:
+  schedule:
+    - cron: "10 19 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: baileys-auth-backup
+  cancel-in-progress: true
+
+jobs:
+  backup-auth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Compress .baileys-auth on Pterodactyl
+        env:
+          PTERODACTYL_BASE_URL: ${{ vars.PTERODACTYL_BASE_URL }}
+          PTERODACTYL_SERVER_ID: ${{ vars.PTERODACTYL_SERVER_ID }}
+          PTERODACTYL_CLIENT_API_KEY: ${{ secrets.PTERODACTYL_CLIENT_API_KEY }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${PTERODACTYL_BASE_URL:-}" ] || [ -z "${PTERODACTYL_SERVER_ID:-}" ] || [ -z "${PTERODACTYL_CLIENT_API_KEY:-}" ]; then
+            echo "PTERODACTYL_BASE_URL / PTERODACTYL_SERVER_ID / PTERODACTYL_CLIENT_API_KEY belum lengkap."
+            exit 1
+          fi
+
+          RESP_FILE="$(mktemp)"
+          HTTP_CODE="$(curl -sS -o "${RESP_FILE}" -w "%{http_code}" \
+            -X POST \
+            -H "Authorization: Bearer ${PTERODACTYL_CLIENT_API_KEY}" \
+            -H "Accept: application/json" \
+            -H "Content-Type: application/json" \
+            "${PTERODACTYL_BASE_URL%/}/api/client/servers/${PTERODACTYL_SERVER_ID}/files/compress" \
+            -d '{"root":"/","files":[".baileys-auth"]}')"
+
+          cat "${RESP_FILE}"
+          if [ "${HTTP_CODE}" -lt 200 ] || [ "${HTTP_CODE}" -ge 300 ]; then
+            echo "Compress auth gagal (HTTP ${HTTP_CODE})."
+            exit 1
+          fi
+
+      - name: Cleanup old auth archives (keep latest 14)
+        env:
+          PTERODACTYL_BASE_URL: ${{ vars.PTERODACTYL_BASE_URL }}
+          PTERODACTYL_SERVER_ID: ${{ vars.PTERODACTYL_SERVER_ID }}
+          PTERODACTYL_CLIENT_API_KEY: ${{ secrets.PTERODACTYL_CLIENT_API_KEY }}
+          BAILEYS_AUTH_BACKUP_KEEP: ${{ vars.BAILEYS_AUTH_BACKUP_KEEP }}
+        run: |
+          set -euo pipefail
+
+          KEEP="${BAILEYS_AUTH_BACKUP_KEEP:-14}"
+          LIST_FILE="$(mktemp)"
+          HTTP_CODE="$(curl -sS -o "${LIST_FILE}" -w "%{http_code}" \
+            -H "Authorization: Bearer ${PTERODACTYL_CLIENT_API_KEY}" \
+            -H "Accept: application/json" \
+            "${PTERODACTYL_BASE_URL%/}/api/client/servers/${PTERODACTYL_SERVER_ID}/files/list?directory=/")"
+
+          if [ "${HTTP_CODE}" -lt 200 ] || [ "${HTTP_CODE}" -ge 300 ]; then
+            echo "List archive gagal (HTTP ${HTTP_CODE})."
+            cat "${LIST_FILE}"
+            exit 1
+          fi
+
+          python - <<'PY' "${LIST_FILE}" "${KEEP}" > cleanup.json
+import json, sys
+path = sys.argv[1]
+keep = int(sys.argv[2])
+data = json.load(open(path, encoding="utf-8")).get("data", [])
+archives = []
+for item in data:
+    attrs = item.get("attributes", {})
+    name = attrs.get("name", "")
+    if name.startswith("archive-") and name.endswith(".tar.gz"):
+        archives.append((attrs.get("modified_at", ""), name))
+archives.sort(reverse=True)
+to_delete = [name for _, name in archives[keep:]]
+print(json.dumps({"root": "/", "files": to_delete}))
+PY
+
+          DELETE_COUNT="$(python - <<'PY'
+import json
+obj = json.load(open('cleanup.json', encoding='utf-8'))
+print(len(obj.get('files', [])))
+PY
+)"
+
+          if [ "${DELETE_COUNT}" = "0" ]; then
+            echo "Tidak ada archive lama yang perlu dihapus."
+            exit 0
+          fi
+
+          curl -sS \
+            -X POST \
+            -H "Authorization: Bearer ${PTERODACTYL_CLIENT_API_KEY}" \
+            -H "Accept: application/json" \
+            -H "Content-Type: application/json" \
+            "${PTERODACTYL_BASE_URL%/}/api/client/servers/${PTERODACTYL_SERVER_ID}/files/delete" \
+            --data-binary @cleanup.json >/dev/null
+          echo "Cleanup archive lama selesai (hapus ${DELETE_COUNT} file)."
