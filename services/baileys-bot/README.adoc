@@ -48,3 +48,11 @@ Variable opsional backup:
 
 * `BAILEYS_AUTH_BACKUP_DIR` (default `/home/container/backups/baileys-auth`)
 * `BAILEYS_AUTH_BACKUP_RETENTION_DAYS` (default `14`)
+
+== Bad MAC Notes
+
+`Session error: Bad MAC` sporadis pada Baileys/libsignal bisa muncul saat rotasi/re-sync session key dan diklasifikasikan sebagai `warning` selama alur utama tetap sehat.
+
+Rujuk playbook operasional:
+
+* `deploy/baileys/BAD-MAC-OPERATIONS.adoc`

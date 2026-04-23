@@ -130,6 +130,18 @@ Untuk restore cepat, pakai script ini di server:
 sh /home/container/baileys-bot/scripts/restore-baileys-auth.sh /path/to/archive-YYYY-MM-DDTHHMMSSZ.tar.gz
 ----
 
+== 6.3) Bad MAC Monitoring-Only Policy
+
+Untuk error `Session error: Bad MAC`, gunakan kebijakan operasional ini:
+
+* Status default: `warning` (non-fatal noise).
+* Trigger tindakan manual: `Bad MAC > 20/10 menit` atau sudah ada dampak bisnis.
+* Jangan ubah runtime code untuk kasus sporadis yang tidak berdampak.
+
+Playbook lengkap ada di:
+
+* `deploy/baileys/BAD-MAC-OPERATIONS.adoc`
+
 == 7) Rotate/Revoke Credential (Wajib)
 
 Urutan rotasi:

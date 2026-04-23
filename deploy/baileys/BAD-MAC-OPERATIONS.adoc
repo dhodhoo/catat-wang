@@ -1,0 +1,61 @@
+= Bad MAC Operations Playbook (Baileys)
+
+== Ringkasan Status
+
+* `Session error: Bad MAC` yang sporadis diklasifikasikan sebagai `warning` (non-fatal noise).
+* Naikkan level ke `incident` hanya jika:
+** volume melewati ambang, atau
+** ada dampak bisnis (bot tidak merespons / transaksi tidak masuk / session turun dari `WORKING`).
+
+== Ambang Tindakan (Locked)
+
+Lakukan tindakan manual jika:
+
+* `Bad MAC > 20 kejadian dalam 10 menit`, atau
+* gejala kritis berikut muncul meski volume di bawah ambang:
+** bot tidak merespons user,
+** transaksi tidak masuk,
+** `GET /session` tidak `WORKING`.
+
+== SOP Manual Recovery (Tanpa Ubah Runtime)
+
+. Cek kesehatan:
+* `GET /health`
+* `GET /session`
+* Pastikan status `WORKING`.
+. Kirim pesan uji dari WhatsApp:
+* `belanja 10k`
+. Jika gejala tetap:
+* `POST /session` action `disconnect`
+* `POST /session` action `ensure`
+* scan QR ulang dari `/settings/whatsapp`.
+. Jika masih gagal:
+* restore auth dari backup terbaru,
+* restart bot,
+* validasi ulang status `WORKING`.
+
+== Observability Harian
+
+* Gunakan workflow `WhatsApp Provider Healthcheck` sebagai guardrail primer.
+* Pantau signature log `Bad MAC` di console Pterodactyl dalam window 10 menit.
+* Catat timestamp saat recovery/manual action untuk analisis tren harian.
+
+== Test Checklist Operasional
+
+. Baseline:
+* saat `Bad MAC` sporadis muncul, kirim 3 pesan transaksi uji;
+* semua harus masuk dan bot tetap merespons.
+. Threshold drill:
+* simulasi periode log padat;
+* pastikan SOP manual dijalankan jika melewati `>20/10m`.
+. Post-recovery:
+* session `WORKING`,
+* bot balas normal,
+* transaksi tersimpan,
+* command `update_last` dan `delete_last` tetap berfungsi.
+
+== Asumsi Operasional
+
+* `Bad MAC` saat ini tidak konsisten menyebabkan message loss.
+* Backup auth harian aktif dan restore dapat dipakai saat recovery.
+* Tidak ada perubahan infrastruktur provider WhatsApp dalam waktu dekat.
