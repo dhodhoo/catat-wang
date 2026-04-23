@@ -9,7 +9,12 @@ $ErrorActionPreference = "Stop"
 function New-UrlSafeSecret {
   param([int]$Bytes)
   $buffer = New-Object byte[] $Bytes
-  [System.Security.Cryptography.RandomNumberGenerator]::Fill($buffer)
+  $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+  try {
+    $rng.GetBytes($buffer)
+  } finally {
+    $rng.Dispose()
+  }
   $raw = [Convert]::ToBase64String($buffer)
   return ($raw.TrimEnd('=') -replace '\+', '-' -replace '/', '_')
 }
