@@ -16,6 +16,10 @@ export function toWhatsAppJid(raw) {
 
   if (!value) return "";
 
+  if (value.endsWith("@lid")) {
+    return value;
+  }
+
   if (value.endsWith("@s.whatsapp.net")) {
     return value;
   }
@@ -44,6 +48,12 @@ export function createWebhookSignature(rawBody, secret) {
 
 export function mapBaileysMessageToWahaEvent(message) {
   const remoteJid = message?.key?.remoteJid ?? "";
+  const senderJid = (
+    message?.key?.senderPn ??
+    message?.key?.participantPn ??
+    message?.key?.participant ??
+    remoteJid
+  );
   const messageId = message?.key?.id ?? crypto.randomUUID();
   const timestamp = Number(message?.messageTimestamp ?? Date.now());
 
@@ -60,8 +70,8 @@ export function mapBaileysMessageToWahaEvent(message) {
     event: "message",
     payload: {
       id: messageId,
-      from: toCompatSenderId(remoteJid),
-      chatId: toCompatChatId(remoteJid),
+      from: toCompatSenderId(senderJid),
+      chatId: toCompatChatId(senderJid),
       fromMe: Boolean(message?.key?.fromMe),
       body: textBody,
       text: textBody,
