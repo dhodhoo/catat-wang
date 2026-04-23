@@ -64,28 +64,9 @@ jobs:
             exit 1
           fi
 
-          python - <<'PY' "${LIST_FILE}" "${KEEP}" > cleanup.json
-import json, sys
-path = sys.argv[1]
-keep = int(sys.argv[2])
-data = json.load(open(path, encoding="utf-8")).get("data", [])
-archives = []
-for item in data:
-    attrs = item.get("attributes", {})
-    name = attrs.get("name", "")
-    if name.startswith("archive-") and name.endswith(".tar.gz"):
-        archives.append((attrs.get("modified_at", ""), name))
-archives.sort(reverse=True)
-to_delete = [name for _, name in archives[keep:]]
-print(json.dumps({"root": "/", "files": to_delete}))
-PY
+          python -c "import json,sys; d=json.load(open(sys.argv[1],encoding='utf-8')).get('data',[]); keep=int(sys.argv[2]); a=[]; [a.append((i.get('attributes',{}).get('modified_at',''),i.get('attributes',{}).get('name',''))) for i in d if i.get('attributes',{}).get('name','').startswith('archive-') and i.get('attributes',{}).get('name','').endswith('.tar.gz')]; a.sort(reverse=True); print(json.dumps({'root':'/','files':[n for _,n in a[keep:]]}))" "${LIST_FILE}" "${KEEP}" > cleanup.json
 
-          DELETE_COUNT="$(python - <<'PY'
-import json
-obj = json.load(open('cleanup.json', encoding='utf-8'))
-print(len(obj.get('files', [])))
-PY
-)"
+          DELETE_COUNT="$(python -c "import json; print(len(json.load(open('cleanup.json',encoding='utf-8')).get('files',[])))")"
 
           if [ "${DELETE_COUNT}" = "0" ]; then
             echo "Tidak ada archive lama yang perlu dihapus."

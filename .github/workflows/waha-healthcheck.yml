@@ -56,14 +56,7 @@ jobs:
               exit 1
             fi
 
-            STATUS="$(python - <<'PY' "$BODY_FILE"
-import json,sys
-p=sys.argv[1]
-with open(p,'r',encoding='utf-8') as f:
-    data=json.load(f)
-print((data.get('session') or {}).get('status',''))
-PY
-)"
+            STATUS="$(jq -r '.session.status // ""' "$BODY_FILE")"
 
             echo "Session status: $STATUS"
             if [ "$STATUS" != "WORKING" ]; then
@@ -100,14 +93,7 @@ PY
             exit 1
           fi
 
-          STATUS="$(python - <<'PY' "$BODY_FILE"
-import json,sys
-p=sys.argv[1]
-with open(p,'r',encoding='utf-8') as f:
-    data=json.load(f)
-print(data.get('status',''))
-PY
-)"
+          STATUS="$(jq -r '.status // ""' "$BODY_FILE")"
 
           echo "Session status: $STATUS"
           if [ "$STATUS" != "WORKING" ]; then
