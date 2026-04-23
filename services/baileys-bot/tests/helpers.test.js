@@ -39,6 +39,22 @@ describe("mapBaileysMessageToWahaEvent", () => {
     expect(payload.payload.from).toBe("628111222333@c.us");
     expect(payload.payload.chatId).toBe("628111222333@c.us");
   });
+
+  it("skips unresolved LID sender when senderPn is not available yet", () => {
+    const payload = mapBaileysMessageToWahaEvent({
+      key: {
+        id: "wamid-test-lid-unresolved",
+        remoteJid: "1837291029384756@lid",
+        fromMe: false
+      },
+      messageTimestamp: 1775130000,
+      message: {
+        conversation: "bonus 500k"
+      }
+    });
+
+    expect(payload).toBeNull();
+  });
 });
 
 describe("createWebhookSignature", () => {

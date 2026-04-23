@@ -46,14 +46,14 @@ export function createWebhookSignature(rawBody, secret) {
   return crypto.createHmac("sha512", secret).update(rawBody).digest("hex");
 }
 
+function isLidJid(jid) {
+  return String(jid ?? "").endsWith("@lid");
+}
+
 export function mapBaileysMessageToWahaEvent(message) {
   const remoteJid = message?.key?.remoteJid ?? "";
-  const senderJid = (
-    message?.key?.senderPn ??
-    message?.key?.participantPn ??
-    message?.key?.participant ??
-    remoteJid
-  );
+  const senderPn = message?.key?.senderPn ?? message?.key?.participantPn ?? "";
+  const senderJid = senderPn || message?.key?.participant || remoteJid;
   const messageId = message?.key?.id ?? crypto.randomUUID();
   const timestamp = Number(message?.messageTimestamp ?? Date.now());
 
@@ -65,6 +65,12 @@ export function mapBaileysMessageToWahaEvent(message) {
 
   const imageMessage = message?.message?.imageMessage;
   const hasImage = Boolean(imageMessage?.mimetype);
+
+  // If the sender is still represented as LID (no phone-number JID yet),
+  // skip forwarding this event to avoid false "nomor belum terhubung" replies.
+  if (isLidJid(senderJid) && !senderPn) {
+    return null;
+  }
 
   return {
     event: "message",

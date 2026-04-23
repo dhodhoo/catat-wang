@@ -174,6 +174,10 @@ async function ensureSession() {
         }
 
         const payload = mapBaileysMessageToWahaEvent(message);
+        if (!payload) {
+          logger.debug({ key: message?.key }, "Skip unresolved LID message (waiting phone-number mapping)");
+          continue;
+        }
         try {
           await postWebhook(payload);
         } catch (error) {
