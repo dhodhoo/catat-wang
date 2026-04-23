@@ -1,0 +1,60 @@
+= WAHA on Pterodactyl - Runbook (Blue/Green)
+
+== 1) Provision WAHA server on Pterodactyl
+
+Prerequisite:
+- Anda sudah punya `Client API Key` dari `Account -> API Credentials` di panel Pterodactyl.
+- Sudah ada server target di panel (Node.js/Docker capable).
+
+Set startup env + docker image:
+
+[source,powershell]
+----
+powershell -ExecutionPolicy Bypass -File .\scripts\provision-waha-pterodactyl.ps1 \
+  -PanelUrl "https://panel.xbotzlauncher.site" \
+  -ClientApiKey "<PTERO_CLIENT_API_KEY>" \
+  -ServerIdentifier "<SERVER_IDENTIFIER>" \
+  -WahaApiKey "<NEW_WAHA_API_KEY>" \
+  -DashboardUsername "admin" \
+  -DashboardPassword "<NEW_DASHBOARD_PASSWORD>" \
+  -RestartServer
+----
+
+== 2) Configure WAHA session + webhook
+
+[source,powershell]
+----
+powershell -ExecutionPolicy Bypass -File .\scripts\configure-waha-session.ps1 \
+  -WahaBaseUrl "https://<waha-domain-baru>" \
+  -WahaApiKey "<NEW_WAHA_API_KEY>" \
+  -SessionName "default" \
+  -WebhookUrl "https://catat-wang.vercel.app/api/whatsapp/webhook" \
+  -WebhookSecret "<NEW_WAHA_WEBHOOK_SECRET>"
+----
+
+== 3) Blue/Green cutover env app (Vercel)
+
+[source,powershell]
+----
+powershell -ExecutionPolicy Bypass -File .\scripts\cutover-waha-blue-green.ps1 \
+  -NewWahaBaseUrl "https://<waha-domain-baru>" \
+  -NewWahaApiKey "<NEW_WAHA_API_KEY>" \
+  -NewWahaWebhookSecret "<NEW_WAHA_WEBHOOK_SECRET>" \
+  -SessionName "default"
+----
+
+Lalu lakukan commit + push agar deployment production berjalan via pipeline GitHub -> Vercel.
+
+== 4) Verification checklist
+
+- `GET /api/sessions/default` di WAHA baru return `200`.
+- Status session WAHA = `WORKING`.
+- Pesan WhatsApp test masuk dan menjadi transaksi di app.
+- Halaman `/settings/whatsapp` tidak menampilkan warning konfigurasi.
+
+== 5) Rollback cepat
+
+Jika ada masalah setelah cutover:
+- Gunakan template rollback di `deploy/waha/rollback-waha-env.example.ps1`.
+- Set kembali env lama (`WAHA_BASE_URL`, `WAHA_API_KEY`, `WAHA_WEBHOOK_SECRET`).
+- Push perubahan yang diperlukan agar deploy rollback terjadi.
