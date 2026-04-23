@@ -36,10 +36,44 @@ function getLocalReminderContext(timezone: string) {
 }
 
 async function sendWhatsAppMessage(to: string, body: string) {
+  const provider = Deno.env.get("WHATSAPP_PROVIDER") ?? "waha";
+  const normalizedPhone = `+${String(to).replace(/[^\d]/g, "").replace(/^0/, "62")}`;
+
+  if (provider === "baileys") {
+    const botBaseUrl = Deno.env.get("BAILEYS_BOT_BASE_URL");
+    const botApiKey = Deno.env.get("BAILEYS_BOT_API_KEY");
+
+    const response = await fetch(new URL("/messages/send", botBaseUrl).toString(), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Api-Key": botApiKey ?? ""
+      },
+      body: JSON.stringify({
+        to: normalizedPhone,
+        text: body
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to send Baileys reminder (${response.status})`);
+    }
+
+    const responseText = await response.text();
+    if (!responseText.trim()) {
+      return {};
+    }
+    try {
+      return JSON.parse(responseText);
+    } catch {
+      return { raw: responseText };
+    }
+  }
+
   const wahaBaseUrl = Deno.env.get("WAHA_BASE_URL");
   const wahaApiKey = Deno.env.get("WAHA_API_KEY");
   const session = Deno.env.get("WAHA_SESSION_NAME") ?? "default";
-  const chatId = `${String(to).replace(/^\+/, "")}@c.us`;
+  const chatId = `${normalizedPhone.replace(/^\+/, "")}@c.us`;
 
   const response = await fetch(new URL("/api/sendText", wahaBaseUrl).toString(), {
     method: "POST",
@@ -92,8 +126,13 @@ export default async function handler(req: Request) {
     });
   }
 
-  if (!Deno.env.get("WAHA_BASE_URL") || !Deno.env.get("WAHA_API_KEY")) {
-    return new Response(JSON.stringify({ status: "skipped", reason: "WAHA is not configured" }), {
+  const provider = Deno.env.get("WHATSAPP_PROVIDER") ?? "waha";
+  const hasWahaConfig = Boolean(Deno.env.get("WAHA_BASE_URL") && Deno.env.get("WAHA_API_KEY"));
+  const hasBaileysConfig = Boolean(Deno.env.get("BAILEYS_BOT_BASE_URL") && Deno.env.get("BAILEYS_BOT_API_KEY"));
+  const providerConfigured = provider === "baileys" ? hasBaileysConfig : hasWahaConfig;
+
+  if (!providerConfigured) {
+    return new Response(JSON.stringify({ status: "skipped", reason: "WhatsApp provider is not configured" }), {
       status: 200,
       headers: {
         "Content-Type": "application/json"

@@ -1,8 +1,9 @@
 import { requireCurrentUserApi } from "@/lib/insforge/auth";
 import {
   createOrUpdateWahaSession,
-  getWahaQrCode,
-  getWahaSession,
+  getMissingWhatsAppConfigFields,
+  getWhatsAppProvider,
+  getWhatsAppSessionSnapshot,
   startWahaSession,
   stopWahaSession
 } from "@/lib/whatsapp/client";
@@ -12,17 +13,6 @@ import { fail, ok } from "@/lib/utils/http";
 
 const SESSION_POLL_ATTEMPTS = 6;
 const SESSION_POLL_DELAY_MS = 1500;
-
-function getMissingWahaConfigFields() {
-  const missing: string[] = [];
-  if (!env.WAHA_BASE_URL) {
-    missing.push("WAHA_BASE_URL");
-  }
-  if (!env.WAHA_API_KEY) {
-    missing.push("WAHA_API_KEY");
-  }
-  return missing;
-}
 
 function assertWebhookSecretConfigured() {
   if (process.env.NODE_ENV === "production" && !env.WAHA_WEBHOOK_SECRET) {
@@ -66,13 +56,8 @@ function sleep(ms: number) {
 }
 
 async function readSessionSnapshot() {
-  const session = await getWahaSession();
-  const qr = session?.status === "SCAN_QR_CODE" ? await getWahaQrCode() : null;
-
-  return {
-    session,
-    qr
-  };
+  const sessionSnapshot = await getWhatsAppSessionSnapshot();
+  return { session: sessionSnapshot.session, qr: sessionSnapshot.qr };
 }
 
 async function waitForSessionSnapshot() {
@@ -97,12 +82,14 @@ export async function GET() {
   try {
     const user = await requireCurrentUserApi();
     requireWahaInternalAdminEmail(user.email);
-    const missingConfig = getMissingWahaConfigFields();
+    const missingConfig = getMissingWhatsAppConfigFields();
+    const provider = getWhatsAppProvider();
 
     if (missingConfig.length > 0) {
       return ok({
         configured: false,
         missingConfig,
+        provider,
         sessionName: env.WAHA_SESSION_NAME,
         webhookUrl: buildWebhookUrl(),
         webhookSecretConfigured: Boolean(env.WAHA_WEBHOOK_SECRET),
@@ -111,12 +98,15 @@ export async function GET() {
       });
     }
 
-    const { session, qr } = await waitForSessionSnapshot();
+    const snapshot = await getWhatsAppSessionSnapshot();
+    const needsPolling = snapshot.session?.status === "STARTING" || (snapshot.session?.status === "SCAN_QR_CODE" && !snapshot.qr);
+    const { session, qr } = needsPolling ? await waitForSessionSnapshot() : snapshot;
 
     return ok({
-      configured: true,
-      missingConfig: [],
-      sessionName: env.WAHA_SESSION_NAME,
+      configured: snapshot.configured,
+      missingConfig,
+      provider,
+      sessionName: snapshot.sessionName,
       webhookUrl: buildWebhookUrl(),
       webhookSecretConfigured: Boolean(env.WAHA_WEBHOOK_SECRET),
       session: session
@@ -132,15 +122,15 @@ export async function GET() {
     if (error instanceof WahaAdminAccessError) {
       return fail(error.message, 403, "forbidden");
     }
-    return fail(error instanceof Error ? error.message : "Gagal mengambil status WAHA.");
+    return fail(error instanceof Error ? error.message : "Gagal mengambil status WhatsApp.");
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const missingConfig = getMissingWahaConfigFields();
+    const missingConfig = getMissingWhatsAppConfigFields();
     if (missingConfig.length > 0) {
-      throw new Error(`Konfigurasi WAHA belum lengkap: ${missingConfig.join(", ")}.`);
+      throw new Error(`Konfigurasi WhatsApp belum lengkap: ${missingConfig.join(", ")}.`);
     }
     assertWebhookSecretConfigured();
     const user = await requireCurrentUserApi();
@@ -150,24 +140,33 @@ export async function POST(request: Request) {
 
     if (action === "disconnect") {
       await stopWahaSession();
-      return ok({ status: "ok" });
+      const snapshot = await getWhatsAppSessionSnapshot();
+      return ok({
+        status: "ok",
+        provider: getWhatsAppProvider(),
+        sessionName: snapshot.sessionName,
+        session: snapshot.session,
+        qr: snapshot.qr
+      });
     }
 
     await createOrUpdateWahaSession(buildSessionConfig());
     await startWahaSession();
 
-    const { session, qr } = await waitForSessionSnapshot();
+    const snapshot = await waitForSessionSnapshot();
+    const latest = await getWhatsAppSessionSnapshot().catch(() => null);
 
     return ok({
       status: "ok",
-      sessionName: env.WAHA_SESSION_NAME,
-      session,
-      qr
+      provider: getWhatsAppProvider(),
+      sessionName: latest?.sessionName ?? env.WAHA_SESSION_NAME,
+      session: latest?.session ?? snapshot.session,
+      qr: latest?.qr ?? snapshot.qr
     });
   } catch (error) {
     if (error instanceof WahaAdminAccessError) {
       return fail(error.message, 403, "forbidden");
     }
-    return fail(error instanceof Error ? error.message : "Gagal menyiapkan session WAHA.");
+    return fail(error instanceof Error ? error.message : "Gagal menyiapkan sesi WhatsApp.");
   }
 }

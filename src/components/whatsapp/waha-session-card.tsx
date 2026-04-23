@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { CheckCircle2, QrCode, RefreshCw, Unplug } from "lucide-react";
 
 interface SessionState {
+  provider?: "waha" | "baileys";
   configured: boolean;
   missingConfig?: string[];
   webhookSecretConfigured?: boolean;
@@ -95,6 +96,7 @@ export function WahaSessionCard() {
     }
     setError(null);
     setData((current) => ({
+      provider: current?.provider,
       configured: current?.configured ?? true,
       missingConfig: current?.missingConfig ?? [],
       webhookSecretConfigured: current?.webhookSecretConfigured ?? false,
@@ -113,6 +115,8 @@ export function WahaSessionCard() {
     return "bg-rose-50 text-rose-700";
   }, [data?.session?.status]);
 
+  const providerLabel = data?.provider === "baileys" ? "Baileys" : "WAHA";
+
   return (
     <div className="surface-panel p-6 sm:p-7">
       <div className="space-y-5">
@@ -127,7 +131,7 @@ export function WahaSessionCard() {
         </div>
 
         <div>
-          <p className="eyebrow">Koneksi WAHA</p>
+          <p className="eyebrow">Koneksi {providerLabel}</p>
           <h2 className="panel-title">Nyalakan sesi lalu scan QR untuk menghubungkan bot.</h2>
         </div>
 
@@ -155,7 +159,7 @@ export function WahaSessionCard() {
             </div>
 
             <img
-              alt="WAHA QR"
+              alt={`${providerLabel} QR`}
               className="mt-4 aspect-square w-full rounded-lg border border-[#e7e5e4] bg-white p-4"
               src={data.qr.startsWith("data:") ? data.qr : `data:image/png;base64,${data.qr}`}
             />

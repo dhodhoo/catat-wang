@@ -1,4 +1,4 @@
-name: WAHA Healthcheck
+name: WhatsApp Provider Healthcheck
 
 on:
   schedule:
@@ -6,25 +6,75 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: waha-healthcheck
+  group: whatsapp-provider-healthcheck
   cancel-in-progress: true
 
 jobs:
-  check-waha:
+  check-whatsapp-provider:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Check WAHA session status
+      - name: Check WhatsApp provider session status
         env:
+          WHATSAPP_PROVIDER: ${{ vars.WHATSAPP_PROVIDER }}
           WAHA_BASE_URL: ${{ vars.WAHA_BASE_URL }}
           WAHA_API_KEY: ${{ secrets.WAHA_API_KEY }}
           WAHA_SESSION_NAME: ${{ vars.WAHA_SESSION_NAME }}
+          BAILEYS_BOT_BASE_URL: ${{ vars.BAILEYS_BOT_BASE_URL }}
+          BAILEYS_BOT_API_KEY: ${{ secrets.BAILEYS_BOT_API_KEY }}
         run: |
           set -euo pipefail
 
+          PROVIDER="${WHATSAPP_PROVIDER:-waha}"
+          SESSION="${WAHA_SESSION_NAME:-default}"
+
+          if [ "$PROVIDER" = "baileys" ]; then
+            BASE_URL="${BAILEYS_BOT_BASE_URL:-}"
+            API_KEY="${BAILEYS_BOT_API_KEY:-}"
+
+            if [ -z "$BASE_URL" ] || [ -z "$API_KEY" ]; then
+              echo "BAILEYS_BOT_BASE_URL / BAILEYS_BOT_API_KEY belum dikonfigurasi di GitHub vars/secrets."
+              exit 1
+            fi
+
+            URL="${BASE_URL%/}/session"
+            echo "Checking Baileys session at $URL"
+
+            BODY_FILE="$(mktemp)"
+            HTTP_CODE="$(curl -sS -o "$BODY_FILE" -w "%{http_code}" \
+              -H "X-Api-Key: ${API_KEY}" \
+              -H "Accept: application/json" \
+              "$URL")"
+
+            echo "HTTP $HTTP_CODE"
+            cat "$BODY_FILE"
+
+            if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
+              echo "Baileys healthcheck failed: non-2xx."
+              exit 1
+            fi
+
+            STATUS="$(python - <<'PY' "$BODY_FILE"
+import json,sys
+p=sys.argv[1]
+with open(p,'r',encoding='utf-8') as f:
+    data=json.load(f)
+print((data.get('session') or {}).get('status',''))
+PY
+)"
+
+            echo "Session status: $STATUS"
+            if [ "$STATUS" != "WORKING" ]; then
+              echo "Baileys healthcheck failed: status is not WORKING."
+              exit 1
+            fi
+
+            echo "Baileys healthcheck OK"
+            exit 0
+          fi
+
           BASE_URL="${WAHA_BASE_URL:-}"
           API_KEY="${WAHA_API_KEY:-}"
-          SESSION="${WAHA_SESSION_NAME:-default}"
 
           if [ -z "$BASE_URL" ] || [ -z "$API_KEY" ]; then
             echo "WAHA_BASE_URL / WAHA_API_KEY belum dikonfigurasi di GitHub vars/secrets."
@@ -32,7 +82,7 @@ jobs:
           fi
 
           URL="${BASE_URL%/}/api/sessions/${SESSION}"
-          echo "Checking $URL"
+          echo "Checking WAHA session at $URL"
 
           BODY_FILE="$(mktemp)"
           HTTP_CODE="$(curl -sS -o "$BODY_FILE" -w "%{http_code}" \

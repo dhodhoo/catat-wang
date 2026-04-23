@@ -1,0 +1,77 @@
+= Runbook Migrasi Baileys di Pterodactyl
+
+== 1) Persiapan Server
+
+. Buat server baru di panel Pterodactyl (Node.js egg).
+. Upload folder `services/baileys-bot` ke server.
+. Jalankan install dependency:
++
+[source,bash]
+----
+npm install --omit=dev
+----
++
+. Set startup command:
++
+[source,bash]
+----
+npm run start
+----
++
+. Siapkan storage persisten untuk auth state:
+* Set `BAILEYS_AUTH_DIR=/home/container/.baileys-auth`
+* Pastikan direktori tidak terhapus saat restart/redeploy.
+
+== 2) Set Environment Bot
+
+Wajib:
+
+* `BOT_API_KEY`
+* `APP_WEBHOOK_URL=https://catat-wang.vercel.app/api/whatsapp/webhook`
+* `APP_WEBHOOK_SECRET=<sama dengan WAHA_WEBHOOK_SECRET app>`
+* `SESSION_NAME=default`
+* `BAILEYS_AUTH_DIR=/home/container/.baileys-auth`
+
+Opsional:
+
+* `PORT=3101`
+* `LOG_LEVEL=info`
+
+== 3) Reverse Proxy HTTPS
+
+Expose service via domain stabil HTTPS (contoh: `https://wa-bot.example.com`).
+Jangan gunakan IP mentah sebagai `BAILEYS_BOT_BASE_URL` di production.
+
+== 4) Cutover Blue/Green
+
+. Biarkan WAHA lama tetap berjalan.
+. Verifikasi bot baru:
+* `GET /health` => 200
+* `GET /session` => status berubah ke `WORKING` setelah scan QR
+. Update env app production (Vercel):
+* `WHATSAPP_PROVIDER=baileys`
+* `BAILEYS_BOT_BASE_URL=<domain HTTPS bot>`
+* `BAILEYS_BOT_API_KEY=<BOT_API_KEY>`
+* `WAHA_SESSION_NAME=default`
+* `WAHA_WEBHOOK_SECRET=<APP_WEBHOOK_SECRET>`
+. Trigger redeploy lewat commit ke GitHub (sesuai alur CI/CD).
+. Monitor 30-60 menit.
+
+== 5) Rollback
+
+Jika ada gangguan:
+
+. Ubah env app:
+* `WHATSAPP_PROVIDER=waha`
+* restore `WAHA_BASE_URL`
+* restore `WAHA_API_KEY`
+. Redeploy via push commit.
+
+== 6) Recovery Cepat
+
+Jika status bukan `WORKING`:
+
+. Hit `POST /session` action `disconnect`.
+. Hit `POST /session` action `ensure`.
+. Scan QR dari `/settings/whatsapp`.
+. Cek log server Pterodactyl dan endpoint `/health`.

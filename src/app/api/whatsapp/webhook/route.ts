@@ -6,6 +6,7 @@ import { createTransaction, deleteLastTransaction, updateLastTransaction } from 
 import { fail, ok } from "@/lib/utils/http";
 
 import {
+  getWhatsAppProvider,
   getPhoneLookupVariants,
   normalizePhone,
   resolveWahaPhone,
@@ -91,7 +92,7 @@ async function handleLinkCode(messageText: string, waFrom: string, replyToChatId
 export async function GET() {
   return ok({
     status: "ok",
-    provider: "waha"
+    provider: getWhatsAppProvider()
   });
 }
 
@@ -107,7 +108,7 @@ export async function POST(request: Request) {
     request.headers.get("x-waha-hmac");
 
   if (!verifyWhatsAppSignature(rawBody, signature)) {
-    return fail("Invalid WAHA webhook signature.", 401, "unauthorized");
+    return fail("Invalid WhatsApp webhook signature.", 401, "unauthorized");
   }
 
   let payload: unknown;

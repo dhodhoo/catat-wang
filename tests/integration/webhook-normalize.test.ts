@@ -40,4 +40,23 @@ describe("normalizeWhatsappPayload", () => {
       computeDedupeHash({ from: "628123", text: "jajan 25rb" })
     );
   });
+
+  it("normalizes Baileys-compatible payload with s.whatsapp.net sender", () => {
+    const result = normalizeWhatsappPayload({
+      event: "message",
+      payload: {
+        id: "wamid.baileys.1",
+        from: "628123456789@s.whatsapp.net",
+        chatId: "628123456789@c.us",
+        body: "makan 20rb",
+        timestamp: 1775130000,
+        fromMe: false
+      }
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0]?.from).toBe("+628123456789");
+    expect(result[0]?.replyToChatId).toBe("628123456789@s.whatsapp.net");
+    expect(result[0]?.type).toBe("text");
+  });
 });

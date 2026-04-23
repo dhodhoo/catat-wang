@@ -1,0 +1,26 @@
+= Baileys Bot Service
+
+Service gateway WhatsApp berbasis Baileys untuk CatatWang.
+
+== Endpoint
+
+* `GET /health`
+* `GET /session`
+* `POST /session` body: `{ "action": "ensure" | "disconnect" }`
+* `POST /messages/send` body: `{ "to": "+62812..." | "62812...@c.us", "text": "..." }`
+
+Semua endpoint butuh header `X-Api-Key: <BOT_API_KEY>`.
+
+== Local Run
+
+[source,bash]
+----
+npm install
+npm run start
+----
+
+== Environment
+
+Lihat `.env.example`.
+
+Nilai `APP_WEBHOOK_SECRET` harus sama dengan `WAHA_WEBHOOK_SECRET` di app agar verifikasi signature tetap kompatibel (`x-waha-hmac`, SHA-512).

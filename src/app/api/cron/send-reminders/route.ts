@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { createInsforgeAdminClient } from "@/lib/insforge/server";
 import { env } from "@/lib/utils/env";
-import { sendWhatsAppTextMessage } from "@/lib/whatsapp/client";
+import { isWhatsAppConfigured, sendWhatsAppTextMessage } from "@/lib/whatsapp/client";
 
 const WEEKDAY_MAP: Record<string, number> = {
   Sun: 0,
@@ -64,9 +64,9 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  if (!env.WAHA_BASE_URL || !env.WAHA_API_KEY) {
+  if (!isWhatsAppConfigured()) {
     return NextResponse.json(
-      { success: false, message: "WAHA belum dikonfigurasi untuk pengiriman reminder." },
+      { success: false, message: "Provider WhatsApp belum dikonfigurasi untuk pengiriman reminder." },
       { status: 500 }
     );
   }
