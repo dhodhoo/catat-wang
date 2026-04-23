@@ -3,13 +3,14 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Pencil, Plus, Search, Trash2 } from "lucide-react";
-import { formatCurrency, formatDateLabel } from "@/lib/utils/format";
+import { formatCurrency, formatDateLabel, formatTimeLabel } from "@/lib/utils/format";
 
 interface TransactionRow {
   id: string;
   amount: number;
   type: "income" | "expense";
   transactionDate: string;
+  createdAt: string;
   note: string | null;
   reviewStatus: "clear" | "need_review";
   categoryId: string;
@@ -353,6 +354,9 @@ export function TransactionsTable({
                   Tanggal
                 </th>
                 <th className="px-6 py-4 text-left font-mono text-[11px] uppercase tracking-[0.2em] text-slate-500">
+                  Waktu
+                </th>
+                <th className="px-6 py-4 text-left font-mono text-[11px] uppercase tracking-[0.2em] text-slate-500">
                   Kategori
                 </th>
                 <th className="px-6 py-4 text-left font-mono text-[11px] uppercase tracking-[0.2em] text-slate-500">
@@ -377,6 +381,9 @@ export function TransactionsTable({
                 >
                   <td className="px-6 py-4 text-sm text-slate-500">
                     {formatDateLabel(item.transactionDate)}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-slate-500">
+                    {formatTimeLabel(item.createdAt)}
                   </td>
                   <td className="px-6 py-4">
                     <div>
@@ -450,7 +457,7 @@ export function TransactionsTable({
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <p className="text-xs text-slate-500">
-                    {formatDateLabel(item.transactionDate)}
+                    {formatDateLabel(item.transactionDate)} • {formatTimeLabel(item.createdAt)}
                   </p>
                   <h3 className="mt-1 truncate text-base text-ink">
                     {item.categoryName || "Tanpa kategori"}

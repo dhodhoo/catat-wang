@@ -38,3 +38,11 @@ export function formatDateLabel(date: string): string {
     year: "numeric"
   }).format(new Date(date));
 }
+
+export function formatTimeLabel(dateTime: string): string {
+  return new Intl.DateTimeFormat("id-ID", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+  }).format(new Date(dateTime));
+}
