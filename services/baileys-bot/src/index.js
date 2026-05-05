@@ -17,6 +17,45 @@ const logger = pino({ level: config.logLevel });
 const app = express();
 app.use(express.json({ limit: "2mb" }));
 
+const BAD_MAC_PATTERNS = [
+  "Session error:Error: Bad MAC",
+  "Failed to decrypt message with any known session"
+];
+
+function installBadMacLogFilter() {
+  const originalStderrWrite = process.stderr.write.bind(process.stderr);
+  let suppressedCount = 0;
+  let flushTimer = null;
+
+  const flushSuppressedCount = () => {
+    if (suppressedCount > 0) {
+      logger.warn({ suppressedCount }, "Suppressed noisy Baileys Bad MAC log lines");
+      suppressedCount = 0;
+    }
+    flushTimer = null;
+  };
+
+  process.stderr.write = (chunk, encoding, callback) => {
+    const text = typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8");
+    const isBadMacNoise = BAD_MAC_PATTERNS.some((pattern) => text.includes(pattern));
+
+    if (isBadMacNoise) {
+      suppressedCount += 1;
+      if (!flushTimer) {
+        flushTimer = setTimeout(flushSuppressedCount, 30_000);
+      }
+      if (typeof callback === "function") {
+        callback();
+      }
+      return true;
+    }
+
+    return originalStderrWrite(chunk, encoding, callback);
+  };
+}
+
+installBadMacLogFilter();
+
 let socket = null;
 let isConnecting = false;
 let currentQr = null;
