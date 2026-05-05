@@ -19,13 +19,37 @@ app.use(express.json({ limit: "2mb" }));
 
 const BAD_MAC_PATTERNS = [
   "Session error:Error: Bad MAC",
-  "Failed to decrypt message with any known session"
+  "Failed to decrypt message with any known session",
+  "Closing open session in favor of incoming prekey bundle",
+  "Closing session: SessionEntry"
 ];
 
 function installBadMacLogFilter() {
   const originalStderrWrite = process.stderr.write.bind(process.stderr);
+  const originalConsoleError = console.error.bind(console);
   let suppressedCount = 0;
   let flushTimer = null;
+  let partialLineBuffer = "";
+  let suppressFollowingStackLines = false;
+
+  const shouldSuppressLine = (line) => {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      return false;
+    }
+
+    if (BAD_MAC_PATTERNS.some((pattern) => line.includes(pattern))) {
+      suppressFollowingStackLines = true;
+      return true;
+    }
+
+    if (suppressFollowingStackLines && /^at\s+/.test(trimmed)) {
+      return true;
+    }
+
+    suppressFollowingStackLines = false;
+    return false;
+  };
 
   const flushSuppressedCount = () => {
     if (suppressedCount > 0) {
@@ -35,22 +59,48 @@ function installBadMacLogFilter() {
     flushTimer = null;
   };
 
+  const trackSuppression = () => {
+    suppressedCount += 1;
+    if (!flushTimer) {
+      flushTimer = setTimeout(flushSuppressedCount, 30_000);
+    }
+  };
+
   process.stderr.write = (chunk, encoding, callback) => {
     const text = typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8");
-    const isBadMacNoise = BAD_MAC_PATTERNS.some((pattern) => text.includes(pattern));
+    partialLineBuffer += text;
 
-    if (isBadMacNoise) {
-      suppressedCount += 1;
-      if (!flushTimer) {
-        flushTimer = setTimeout(flushSuppressedCount, 30_000);
+    const lines = partialLineBuffer.split(/\r?\n/);
+    partialLineBuffer = lines.pop() ?? "";
+
+    const keptLines = [];
+    for (const line of lines) {
+      if (shouldSuppressLine(line)) {
+        trackSuppression();
+      } else {
+        keptLines.push(line);
       }
-      if (typeof callback === "function") {
-        callback();
-      }
+    }
+
+    if (keptLines.length === 0) {
+      if (typeof callback === "function") callback();
       return true;
     }
 
-    return originalStderrWrite(chunk, encoding, callback);
+    return originalStderrWrite(`${keptLines.join("\n")}\n`, encoding, callback);
+  };
+
+  console.error = (...args) => {
+    const line = args
+      .map((part) => (typeof part === "string" ? part : String(part)))
+      .join(" ");
+
+    if (shouldSuppressLine(line)) {
+      trackSuppression();
+      return;
+    }
+
+    originalConsoleError(...args);
   };
 }
 
