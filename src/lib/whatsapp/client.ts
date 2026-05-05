@@ -166,7 +166,9 @@ export function toWahaChatId(phone: string) {
 }
 
 export function fromWahaChatId(chatId: string) {
-  return normalizePhone(chatId.replace(/@(c\.us|s\.whatsapp\.net|lid)$/i, ""));
+  const withoutDomain = chatId.replace(/@(c\.us|s\.whatsapp\.net|lid)$/i, "");
+  const withoutDeviceSuffix = withoutDomain.replace(/:\d+$/, "");
+  return normalizePhone(withoutDeviceSuffix);
 }
 
 function isWahaLid(chatId: string) {
