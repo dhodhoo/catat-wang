@@ -38,6 +38,27 @@ function getDateFromTimestamp(timestamp: unknown) {
   return new Date();
 }
 
+export function isDirectChatId(chatId: string) {
+  const normalized = chatId.trim().toLowerCase();
+  if (!normalized || !normalized.includes("@")) {
+    return false;
+  }
+
+  if (
+    normalized.endsWith("@g.us") ||
+    normalized.endsWith("@broadcast") ||
+    normalized.includes("@newsletter")
+  ) {
+    return false;
+  }
+
+  return (
+    normalized.endsWith("@c.us") ||
+    normalized.endsWith("@s.whatsapp.net") ||
+    normalized.endsWith("@lid")
+  );
+}
+
 export function normalizeWhatsappPayload(payload: any): NormalizedWhatsappMessage[] {
   if (!payload?.event || !payload?.payload) {
     return [];
@@ -48,6 +69,22 @@ export function normalizeWhatsappPayload(payload: any): NormalizedWhatsappMessag
   }
 
   if (payload.payload?.fromMe) {
+    return [];
+  }
+
+  const sourceChatId = String(payload.payload?.chatId ?? payload.payload?.from ?? "");
+  const sourceFrom = String(payload.payload?.from ?? "");
+  const providerRemoteJid = String(payload.payload?._meta?.remoteJid ?? "");
+
+  if (providerRemoteJid && !isDirectChatId(providerRemoteJid)) {
+    return [];
+  }
+
+  if (!isDirectChatId(sourceChatId)) {
+    return [];
+  }
+
+  if (sourceFrom && sourceFrom.toLowerCase().endsWith("@broadcast")) {
     return [];
   }
 
@@ -65,16 +102,29 @@ export function normalizeWhatsappPayload(payload: any): NormalizedWhatsappMessag
           : "text"
         : "unknown";
 
+  const fallbackMessageId = crypto
+    .createHash("sha256")
+    .update(
+      JSON.stringify({
+        event: payload.event ?? "",
+        from: payload.payload?.from ?? payload.payload?.chatId ?? "",
+        timestamp: payload.payload?.timestamp ?? "",
+        body: payload.payload?.body ?? payload.payload?.text ?? "",
+        mediaSha256: payload.payload?.media?.sha256 ?? payload.payload?.media?.id ?? ""
+      })
+    )
+    .digest("hex");
+
   return [
     {
-      messageId: String(payload.payload?.id ?? crypto.randomUUID()),
+      messageId: String(payload.payload?.id ?? fallbackMessageId),
       from: fromWahaChatId(String(payload.payload?.from ?? payload.payload?.chatId ?? "")),
       replyToChatId: String(payload.payload?.from ?? payload.payload?.chatId ?? ""),
       type,
       text: textBody,
       image: hasImage
         ? {
-            id: String(payload.payload?.id ?? crypto.randomUUID()),
+            id: String(payload.payload?.id ?? fallbackMessageId),
             mimeType: payload.payload?.media?.mimetype ?? null,
             sha256: payload.payload?.media?.sha256 ?? null,
             url: payload.payload?.media?.url ?? null

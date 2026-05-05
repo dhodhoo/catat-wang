@@ -18,8 +18,10 @@ describe("mapBaileysMessageToWahaEvent", () => {
 
     expect(payload.event).toBe("message");
     expect(payload.payload.from).toBe("628123456789@c.us");
+    expect(payload.payload.chatId).toBe("628123456789@c.us");
     expect(payload.payload.body).toBe("jajan 25rb");
     expect(payload.payload.id).toBe("wamid-test-1");
+    expect(payload.payload._meta.remoteJid).toBe("628123456789@s.whatsapp.net");
   });
 
   it("maps LID sender to phone-number JID when senderPn exists", () => {
@@ -37,7 +39,8 @@ describe("mapBaileysMessageToWahaEvent", () => {
     });
 
     expect(payload.payload.from).toBe("628111222333@c.us");
-    expect(payload.payload.chatId).toBe("628111222333@c.us");
+    expect(payload.payload.chatId).toBe("1837291029384756@lid");
+    expect(payload.payload._meta.remoteJid).toBe("1837291029384756@lid");
   });
 
   it("skips unresolved LID sender when senderPn is not available yet", () => {
@@ -54,6 +57,28 @@ describe("mapBaileysMessageToWahaEvent", () => {
     });
 
     expect(payload).toBeNull();
+  });
+
+  it("keeps status chatId as status@broadcast while preserving sender identity", () => {
+    const payload = mapBaileysMessageToWahaEvent({
+      key: {
+        id: "wamid-test-status",
+        remoteJid: "status@broadcast",
+        participant: "628111222333@s.whatsapp.net",
+        fromMe: false
+      },
+      messageTimestamp: 1775130000,
+      message: {
+        imageMessage: {
+          mimetype: "image/jpeg",
+          caption: "status image"
+        }
+      }
+    });
+
+    expect(payload.payload.chatId).toBe("status@broadcast");
+    expect(payload.payload.from).toBe("628111222333@c.us");
+    expect(payload.payload._meta.remoteJid).toBe("status@broadcast");
   });
 });
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeDedupeHash, normalizeWhatsappPayload } from "@/lib/whatsapp/webhook";
+import { computeDedupeHash, isDirectChatId, normalizeWhatsappPayload } from "@/lib/whatsapp/webhook";
 
 describe("normalizeWhatsappPayload", () => {
   it("normalizes WAHA text messages", () => {
@@ -58,5 +58,92 @@ describe("normalizeWhatsappPayload", () => {
     expect(result[0]?.from).toBe("+628123456789");
     expect(result[0]?.replyToChatId).toBe("628123456789@s.whatsapp.net");
     expect(result[0]?.type).toBe("text");
+  });
+
+  it("ignores status broadcast messages", () => {
+    const result = normalizeWhatsappPayload({
+      event: "message",
+      payload: {
+        id: "wamid.status.1",
+        from: "status@broadcast",
+        body: "status text",
+        timestamp: 1775130000,
+        fromMe: false
+      }
+    });
+
+    expect(result).toHaveLength(0);
+  });
+
+  it("ignores status payload when chatId is spoofed as DM but metadata remoteJid is broadcast", () => {
+    const result = normalizeWhatsappPayload({
+      event: "message",
+      payload: {
+        id: "wamid.status.spoofed.1",
+        from: "628123456789@c.us",
+        chatId: "628123456789@c.us",
+        body: "status caption",
+        timestamp: 1775130000,
+        fromMe: false,
+        _meta: {
+          provider: "baileys",
+          remoteJid: "status@broadcast",
+          participant: "628123456789@s.whatsapp.net"
+        },
+        media: {
+          url: "baileys://media/wamid.status.spoofed.1",
+          mimetype: "image/jpeg"
+        }
+      }
+    });
+
+    expect(result).toHaveLength(0);
+  });
+
+  it("ignores group messages", () => {
+    const result = normalizeWhatsappPayload({
+      event: "message",
+      payload: {
+        id: "wamid.group.1",
+        from: "628123456789@s.whatsapp.net",
+        chatId: "120363999999999999@g.us",
+        body: "jajan 20rb",
+        timestamp: 1775130000,
+        fromMe: false
+      }
+    });
+
+    expect(result).toHaveLength(0);
+  });
+
+  it("ignores newsletter/channel messages", () => {
+    const result = normalizeWhatsappPayload({
+      event: "message",
+      payload: {
+        id: "wamid.channel.1",
+        from: "120363999999999999@newsletter",
+        chatId: "120363999999999999@newsletter",
+        body: "promo",
+        timestamp: 1775130000,
+        fromMe: false
+      }
+    });
+
+    expect(result).toHaveLength(0);
+  });
+});
+
+describe("isDirectChatId", () => {
+  it("returns true for supported direct chat ids", () => {
+    expect(isDirectChatId("628123@c.us")).toBe(true);
+    expect(isDirectChatId("628123@s.whatsapp.net")).toBe(true);
+    expect(isDirectChatId("1234567890@lid")).toBe(true);
+  });
+
+  it("returns false for non-direct chat ids", () => {
+    expect(isDirectChatId("status@broadcast")).toBe(false);
+    expect(isDirectChatId("120363999999999999@g.us")).toBe(false);
+    expect(isDirectChatId("120363999999999999@newsletter")).toBe(false);
+    expect(isDirectChatId("120363999999999999@broadcast")).toBe(false);
   });
 });

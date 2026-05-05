@@ -354,12 +354,53 @@ export async function POST(request: Request) {
 
 
     if (message.type === "image") {
-      await sendWhatsAppTextMessage(
-        message.replyToChatId,
-        "Gambar tidak diproses oleh sistem. Silakan kirim teks transaksi langsung, contoh:\n\n• *jajan 25rb*\n• *gaji masuk 5jt*\n• *belanja 150000*"
-      );
+      const dedupeHash = computeDedupeHash({ from: senderPhone, mediaId: message.image?.id });
+      try {
+        await sendWhatsAppTextMessage(
+          message.replyToChatId,
+          "Gambar tidak diproses oleh sistem. Silakan kirim teks transaksi langsung, contoh:\n\n- *jajan 25rb*\n- *gaji masuk 5jt*\n- *belanja 150000*"
+        );
+        await persistMessageLog({
+          whatsapp_message_id: message.messageId,
+          user_id: null,
+          wa_from: senderPhone,
+          wa_type: message.type,
+          raw_text: message.text,
+          media_id: message.image?.id ?? null,
+          media_mime_type: message.image?.mimeType ?? null,
+          media_sha256: message.image?.sha256 ?? null,
+          intent: "unknown",
+          parsed_payload: null,
+          dedupe_hash: dedupeHash,
+          processing_status: "processed",
+          transaction_id: null,
+          provider_payload: message.providerPayload,
+          received_at: message.receivedAt.toISOString()
+        });
+      } catch (error: any) {
+        await persistMessageLog({
+          whatsapp_message_id: message.messageId,
+          user_id: null,
+          wa_from: senderPhone,
+          wa_type: message.type,
+          raw_text: message.text,
+          media_id: message.image?.id ?? null,
+          media_mime_type: message.image?.mimeType ?? null,
+          media_sha256: message.image?.sha256 ?? null,
+          intent: "unknown",
+          parsed_payload: {
+            error: error?.message ?? "Gagal mengirim balasan untuk pesan gambar."
+          },
+          dedupe_hash: dedupeHash,
+          processing_status: "failed",
+          transaction_id: null,
+          provider_payload: message.providerPayload,
+          received_at: message.receivedAt.toISOString()
+        });
+      }
     }
   }
 
   return ok({ received: true });
 }
+

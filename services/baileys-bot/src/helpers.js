@@ -52,6 +52,7 @@ function isLidJid(jid) {
 
 export function mapBaileysMessageToWahaEvent(message) {
   const remoteJid = message?.key?.remoteJid ?? "";
+  const participantJid = message?.key?.participant ?? "";
   const senderPn = message?.key?.senderPn ?? message?.key?.participantPn ?? "";
   const senderJid = senderPn || message?.key?.participant || remoteJid;
   const messageId = message?.key?.id ?? crypto.randomUUID();
@@ -77,11 +78,17 @@ export function mapBaileysMessageToWahaEvent(message) {
     payload: {
       id: messageId,
       from: toCompatSenderId(senderJid),
-      chatId: toCompatChatId(senderJid),
+      chatId: toCompatChatId(remoteJid),
       fromMe: Boolean(message?.key?.fromMe),
       body: textBody,
       text: textBody,
       timestamp,
+      _meta: {
+        provider: "baileys",
+        remoteJid,
+        participant: participantJid || null,
+        senderPn: senderPn || null
+      },
       ...(hasImage
         ? {
             media: {
