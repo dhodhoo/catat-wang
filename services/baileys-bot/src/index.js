@@ -26,10 +26,12 @@ const BAD_MAC_PATTERNS = [
 
 function installBadMacLogFilter() {
   const originalStderrWrite = process.stderr.write.bind(process.stderr);
+  const originalStdoutWrite = process.stdout.write.bind(process.stdout);
   const originalConsoleError = console.error.bind(console);
   let suppressedCount = 0;
   let flushTimer = null;
   let partialLineBuffer = "";
+  let partialStdoutBuffer = "";
   let suppressFollowingStackLines = false;
 
   const shouldSuppressLine = (line) => {
@@ -88,6 +90,31 @@ function installBadMacLogFilter() {
     }
 
     return originalStderrWrite(`${keptLines.join("\n")}\n`, encoding, callback);
+  };
+
+  // Some libsignal/baileys stacks can leak via stdout depending on runtime wrappers.
+  process.stdout.write = (chunk, encoding, callback) => {
+    const text = typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8");
+    partialStdoutBuffer += text;
+
+    const lines = partialStdoutBuffer.split(/\r?\n/);
+    partialStdoutBuffer = lines.pop() ?? "";
+
+    const keptLines = [];
+    for (const line of lines) {
+      if (shouldSuppressLine(line)) {
+        trackSuppression();
+      } else {
+        keptLines.push(line);
+      }
+    }
+
+    if (keptLines.length === 0) {
+      if (typeof callback === "function") callback();
+      return true;
+    }
+
+    return originalStdoutWrite(`${keptLines.join("\n")}\n`, encoding, callback);
   };
 
   console.error = (...args) => {
