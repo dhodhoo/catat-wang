@@ -94,17 +94,13 @@ Jika status bukan `WORKING`:
 == 6.1) Monitoring + Alert (No.4)
 
 . Aktifkan workflow GitHub `WhatsApp Provider Healthcheck` (sudah jalan tiap 5 menit).
-. Tambahkan secret repo untuk alert:
-* `WHATSAPP_ALERT_WEBHOOK_URL=<webhook Slack/Discord/Telegram bridge>`
+. Alert webhook Discord/Slack untuk WA bot sudah dinonaktifkan (decommission).
 . Pastikan vars/secrets provider sudah terisi:
 * `WHATSAPP_PROVIDER`
 * `BAILEYS_BOT_BASE_URL`
 * `BAILEYS_BOT_API_KEY`
 
-Jika healthcheck gagal atau session bukan `WORKING`, workflow akan:
-
-* menandai run sebagai gagal, dan
-* mengirim alert ke `WHATSAPP_ALERT_WEBHOOK_URL` (jika di-set).
+Jika healthcheck diaktifkan kembali di masa depan, tentukan channel alert baru sesuai kebijakan operasional terbaru.
 
 == 6.2) Backup Auth Session (No.5)
 

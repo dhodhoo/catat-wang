@@ -34,6 +34,7 @@
     font-family: var(--font-body), sans-serif;
     background-color: #fafaf9;
     font-feature-settings: "cv02", "cv03", "cv04";
+    padding-top: 4.25rem;
   }
 
   * {
@@ -149,6 +150,25 @@
 
   .status-chip {
     @apply inline-flex items-center gap-2 rounded-lg border border-[#e7e5e4] bg-white px-2.5 py-1 text-[0.7rem] font-medium text-slate-600 shadow-sm;
+  }
+
+  .floating-decommission-banner {
+    position: fixed;
+    top: 0.75rem;
+    left: 50%;
+    z-index: 9999;
+    width: min(92vw, 980px);
+    transform: translateX(-50%);
+    border-radius: 12px;
+    border: 1px solid #fca5a5;
+    background: #7f1d1d;
+    color: #fff;
+    padding: 0.75rem 1rem;
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.35;
+    box-shadow: 0 8px 24px rgba(127, 29, 29, 0.28);
   }
 
   .stat-chip {

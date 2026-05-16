@@ -26,6 +26,9 @@ export default function RootLayout({
   return (
     <html lang="id">
       <body className={`${bodyFont.variable} ${monoFont.variable}`}>
+        <div className="floating-decommission-banner" role="status" aria-live="polite">
+          CatatWang sudah tidak beroperasi sejak 16 Mei 2026. Layanan pencatatan dan automasi WhatsApp dihentikan.
+        </div>
         {children}
       </body>
     </html>
